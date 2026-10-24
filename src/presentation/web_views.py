@@ -300,6 +300,20 @@ def render_dashboard_html(service: ChallengeService) -> str:
             gap: 12px;
         }}
 
+        .form-group {{
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }}
+
+        .form-label {{
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }}
+
         .form-input {{
             flex: 1;
             background: var(--bg-main);
@@ -393,10 +407,16 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 <h3 style="font-size: 1.1rem; margin-bottom: 8px;">👤 Inscribir Miembro</h3>
                 <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Registra un participante de la DIDT al reto.</p>
                 <form class="action-form" onsubmit="event.preventDefault(); registerParticipant();">
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <input id="new-id" class="form-input" placeholder="ID único (ej: p1)" required>
-                        <input id="new-name" class="form-input" placeholder="Nombre completo" required>
-                        <button type="submit" class="btn">Inscribir Miembro</button>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="form-group">
+                            <label for="new-id" class="form-label">ID Único</label>
+                            <input id="new-id" class="form-input" placeholder="Ej: didt-01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-name" class="form-label">Nombre Completo</label>
+                            <input id="new-name" class="form-input" placeholder="Nombre y apellido" required>
+                        </div>
+                        <button type="submit" class="btn" style="margin-top: 4px;">Inscribir Miembro</button>
                     </div>
                 </form>
             </div>
@@ -406,10 +426,16 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--secondary);">💳 Abonar Pago Quincenal</h3>
                 <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Cuota: $200 quincenales (5 fechas oficiales).</p>
                 <form class="action-form" onsubmit="event.preventDefault(); submitPaymentForm();">
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <input id="pay-pid" class="form-input" placeholder="ID de Miembro (ej: p1)" required>
-                        <input id="pay-amount" type="number" step="0.01" class="form-input" placeholder="Monto en MXN" value="200.00" required>
-                        <button type="submit" class="btn btn-secondary">💳 Abonar Pago Quincenal</button>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="form-group">
+                            <label for="pay-pid" class="form-label">ID de Miembro</label>
+                            <input id="pay-pid" class="form-input" placeholder="Ej: didt-01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pay-amount" class="form-label">Monto a Abonar (MXN)</label>
+                            <input id="pay-amount" type="number" step="0.01" class="form-input" placeholder="200.00" value="200.00" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary" style="margin-top: 4px;">💳 Abonar Pago Quincenal</button>
                     </div>
                 </form>
             </div>
@@ -417,15 +443,32 @@ def render_dashboard_html(service: ChallengeService) -> str:
             <!-- Formulario 3: Registrar Actividad Diaria -->
             <div class="card col-8">
                 <h3 style="font-size: 1.1rem; margin-bottom: 8px;">🏃 Registrar Actividad Diaria</h3>
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Meta diaria: $\ge 300$ kcal o $\ge 10,000$ pasos (requiere 4 días exitosos/semana).</p>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Meta diaria: $\ge 300$ kcal o $\ge 10,000$ pasos (mínimo 4 días exitosos/semana).</p>
                 <form class="action-form" onsubmit="event.preventDefault(); submitActivityForm();">
-                    <div class="form-row" style="flex-wrap: wrap;">
-                        <input id="act-pid" class="form-input" placeholder="ID (ej: p1)" required style="flex: 1; min-width: 90px;">
-                        <input id="act-week" type="number" min="1" max="9" class="form-input" placeholder="Sem (1-9)" value="1" required style="width: 95px;">
-                        <input id="act-day" type="number" min="1" max="7" class="form-input" placeholder="Día (1-7)" value="1" required style="width: 90px;">
-                        <input id="act-cals" type="number" min="0" class="form-input" placeholder="Calorías" value="350" style="width: 105px;">
-                        <input id="act-steps" type="number" min="0" class="form-input" placeholder="Pasos" value="5000" style="width: 105px;">
-                        <button type="submit" class="btn">Guardar Día</button>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; align-items: flex-end;">
+                        <div class="form-group">
+                            <label for="act-pid" class="form-label">ID Miembro</label>
+                            <input id="act-pid" class="form-input" placeholder="Ej: didt-01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="act-week" class="form-label">Semana</label>
+                            <input id="act-week" type="number" min="1" max="9" class="form-input" placeholder="1-9" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="act-day" class="form-label">Día (1-7)</label>
+                            <input id="act-day" type="number" min="1" max="7" class="form-input" placeholder="1-7" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="act-cals" class="form-label">Calorías</label>
+                            <input id="act-cals" type="number" min="0" class="form-input" placeholder="≥ 300 kcal" value="350">
+                        </div>
+                        <div class="form-group">
+                            <label for="act-steps" class="form-label">Pasos</label>
+                            <input id="act-steps" type="number" min="0" class="form-input" placeholder="≥ 10,000" value="5000">
+                        </div>
+                        <div class="form-group" style="min-width: 120px;">
+                            <button type="submit" class="btn" style="width: 100%; height: 42px;">Guardar Día</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -435,9 +478,12 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--neon-accent);">⚖️ Liquidar Semana</h3>
                 <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Penaliza $100 por incumplimiento y reparte la bolsa.</p>
                 <form class="action-form" onsubmit="event.preventDefault(); submitCloseWeekForm();">
-                    <div style="display: flex; gap: 8px;">
-                        <input id="close-week" type="number" min="1" max="9" class="form-input" placeholder="Semana (1-9)" value="1" required style="width: 110px;">
-                        <button type="submit" class="btn" style="background: var(--neon-accent); color: #0F172A; flex: 1;">Liquidar Semana</button>
+                    <div style="display: flex; gap: 8px; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="close-week" class="form-label">Semana (1 a 9)</label>
+                            <input id="close-week" type="number" min="1" max="9" class="form-input" placeholder="1-9" value="1" required>
+                        </div>
+                        <button type="submit" class="btn" style="background: var(--neon-accent); color: #0F172A; height: 42px;">Liquidar Semana</button>
                     </div>
                 </form>
             </div>
