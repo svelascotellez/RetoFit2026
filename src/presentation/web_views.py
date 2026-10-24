@@ -394,8 +394,10 @@ def render_dashboard_html(service: ChallengeService) -> str:
                         <button type="submit" class="btn">Inscribir Miembro</button>
                     </div>
                 </form>
-                <div style="margin-top: 16px; display: flex; gap: 12px;">
-                    <button class="btn btn-secondary" onclick="recordSampleActivity()">+ Cargar Día Exitoso (Ejemplo)</button>
+                <div style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="recordPaymentPrompt()">💳 + Abonar Pago Quincenal</button>
+                    <button class="btn btn-secondary" onclick="recordActivityPrompt()">🏃 + Registrar Actividad</button>
+                    <button class="btn" style="background: var(--neon-accent); color: #0F172A;" onclick="closeWeekPrompt()">⚖️ Liquidar Semana</button>
                 </div>
             </div>
 
@@ -409,8 +411,8 @@ def render_dashboard_html(service: ChallengeService) -> str:
 
     <script>
         async function registerParticipant() {{
-            const id = document.getElementById('new-id').value;
-            const name = document.getElementById('new-name').value;
+            const id = document.getElementById('new-id').value.trim();
+            const name = document.getElementById('new-name').value.trim();
             if (!id || !name) return;
             const res = await fetch('/api/participants', {{
                 method: 'POST',
@@ -421,30 +423,80 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 window.location.reload();
             }} else {{
                 const err = await res.json();
-                alert(err.detail || 'Error al registrar');
+                alert(err.detail || 'Error al registrar miembro');
             }}
         }}
 
-        async function recordSampleActivity() {{
-            const pid = prompt("Ingresa el ID del participante:");
+        async function recordPaymentPrompt() {{
+            const pid = prompt("ID del miembro que abona (ej: p1):");
             if (!pid) return;
+            const amtStr = prompt("Monto del abono en MXN (Cuota: $200 por quincena):", "200.00");
+            if (!amtStr) return;
+            const amount = parseFloat(amtStr);
+            if (isNaN(amount) || amount <= 0) {{
+                alert("Por favor ingresa un monto numérico positivo.");
+                return;
+            }}
+            const res = await fetch('/api/payments', {{
+                method: 'POST',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ participant_id: pid, amount: amount }})
+            }});
+            if (res.ok) {{
+                const data = await res.json();
+                alert("¡Abono registrado! Total aportado acumulado: $" + data.total_contributed.toFixed(2));
+                window.location.reload();
+            }} else {{
+                const err = await res.json();
+                alert(err.detail || 'Error al registrar el abono');
+            }}
+        }}
+
+        async function recordActivityPrompt() {{
+            const pid = prompt("ID del miembro (ej: p1):");
+            if (!pid) return;
+            const weekStr = prompt("Número de semana (1 a 9):", "1");
+            if (!weekStr) return;
+            const dayStr = prompt("Día de la semana (1 a 7):", "1");
+            if (!dayStr) return;
+            const calStr = prompt("Calorías quemadas (meta >= 300 kcal):", "350");
+            const stepsStr = prompt("Pasos caminados (meta >= 10,000 pasos):", "5000");
+
             const res = await fetch('/api/activity', {{
                 method: 'POST',
                 headers: {{ 'Content-Type': 'application/json' }},
                 body: JSON.stringify({{
                     participant_id: pid,
-                    week_number: 1,
-                    day_of_week: 1,
-                    calories: 350,
-                    steps: 5000
+                    week_number: parseInt(weekStr),
+                    day_number: parseInt(dayStr),
+                    calories: parseInt(calStr || "0"),
+                    steps: parseInt(stepsStr || "0")
                 }})
             }});
             if (res.ok) {{
-                alert("¡Actividad registrada exitosamente como Día Exitoso (350 kcal)!");
+                const data = await res.json();
+                const statusMsg = data.is_successful ? "¡DÍA EXITOSO! Cumple con la meta." : "Día registrado (no alcanzó meta diaria).";
+                alert(statusMsg);
                 window.location.reload();
             }} else {{
                 const err = await res.json();
                 alert(err.detail || 'Error al registrar actividad');
+            }}
+        }}
+
+        async function closeWeekPrompt() {{
+            const weekStr = prompt("Número de semana a liquidar (1 a 9):", "1");
+            if (!weekStr) return;
+            const res = await fetch('/api/weeks/' + encodeURIComponent(weekStr) + '/close', {{
+                method: 'POST'
+            }});
+            if (res.ok) {{
+                const data = await res.json();
+                alert("¡Semana " + data.week_number + " liquidada! Cumplidores: " + data.compliant_participants.length + " | Incumplidores: " + data.non_compliant_participants.length + " | Bolsa: $" + data.pool_collected + " | Ganancia por persona: $" + data.payout_per_compliant);
+                window.location.reload();
+            }} else {{
+                const err = await res.json();
+                alert(err.detail || 'Error al liquidar la semana');
             }}
         }}
     </script>
