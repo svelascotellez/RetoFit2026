@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "visual_archetype": "fitness_dark_energy_neon",
+  "color_palette": {
+    "primary": "#10B981",
+    "primary_hover": "#059669",
+    "secondary": "#F97316",
+    "secondary_hover": "#EA580C",
+    "background": "#0F172A",
+    "surface": "#1E293B",
+    "surface_variant": "#334155",
+    "text_primary": "#F8FAFC",
+    "text_secondary": "#94A3B8",
+    "border": "#334155",
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "error": "#EF4444",
+    "neon_accent": "#06B6D4"
+  },
+  "typography": {
+    "font_family_primary": "Outfit, Inter, system-ui, sans-serif",
+    "font_family_mono": "Fira Code, monospace",
+    "scale": {
+      "h1": "2.25rem",
+      "h2": "1.75rem",
+      "h3": "1.25rem",
+      "body": "1rem",
+      "small": "0.875rem"
+    }
+  },
+  "layout": "bento_grid",
+  "spacing_grid": "8px",
+  "accessibility_standard": "WCAG_2.1_AA",
+  "component_states_required": [
+    "default", "hover", "active", "focus-visible",
+    "disabled", "loading_skeleton", "empty_state", "error_state"
+  ]
+}

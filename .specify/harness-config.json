@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "source_dir": "src",
+  "test_dir": "tests",
+  "file_extension": "*.py",
+  "typecheck_cmd": "python -m mypy src --ignore-missing-imports --explicit-package-bases",
+  "test_cmd": "python -m pytest -q tests",
+  "forbidden_domain_imports": [
+    "fastapi", "flask", "django", "starlette", "requests",
+    "httpx", "aiohttp", "sqlalchemy", "peewee", "pymongo", "psycopg2",
+    "tkinter", "PyQt5", "PyQt6", "PySide2", "PySide6", "flet", "streamlit", "gradio"
+  ]
+}
