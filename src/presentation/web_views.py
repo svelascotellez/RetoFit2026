@@ -23,12 +23,15 @@ def render_dashboard_html(service: ChallengeService) -> str:
             participants_rows += f"""
             <tr>
                 <td><strong>{p.name}</strong> <span class="text-muted">({p.participant_id})</span></td>
-                <td>${p.total_contributed:.2f} / $1,000.00</td>
+                <td><strong>${p.total_contributed:.2f}</strong> <span class="text-muted">/ $1,000.00</span></td>
                 <td>{status_badge}</td>
                 <td>{p.weeks_missed}</td>
                 <td class="text-error">-${p.total_penalties:.2f}</td>
                 <td class="text-success">+${p.total_earnings:.2f}</td>
                 <td class="{net_class}"><strong>${p.net_balance:.2f}</strong></td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="quickPay('{p.participant_id}', 200)">+ $200 Quincena</button>
+                </td>
             </tr>
             """
         table_content = f"""
@@ -43,6 +46,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
                         <th scope="col">Penalizaciones</th>
                         <th scope="col">Ganancias Bolsa</th>
                         <th scope="col">Balance Neto Final</th>
+                        <th scope="col">Abonar Quincena</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -384,21 +388,58 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 </ul>
             </div>
 
-            <!-- Registro Rapido -->
-            <div class="card col-8">
-                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Acciones Rápidas del Reto</h3>
+            <!-- Formulario 1: Inscribir Miembro -->
+            <div class="card col-4">
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">👤 Inscribir Miembro</h3>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Registra un participante de la DIDT al reto.</p>
                 <form class="action-form" onsubmit="event.preventDefault(); registerParticipant();">
-                    <div class="form-row">
-                        <input id="new-id" class="form-input" placeholder="ID (ej: p1)" required>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input id="new-id" class="form-input" placeholder="ID único (ej: p1)" required>
                         <input id="new-name" class="form-input" placeholder="Nombre completo" required>
                         <button type="submit" class="btn">Inscribir Miembro</button>
                     </div>
                 </form>
-                <div style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px;">
-                    <button class="btn btn-secondary" onclick="recordPaymentPrompt()">💳 + Abonar Pago Quincenal</button>
-                    <button class="btn btn-secondary" onclick="recordActivityPrompt()">🏃 + Registrar Actividad</button>
-                    <button class="btn" style="background: var(--neon-accent); color: #0F172A;" onclick="closeWeekPrompt()">⚖️ Liquidar Semana</button>
-                </div>
+            </div>
+
+            <!-- Formulario 2: Abonar Pago Quincenal -->
+            <div class="card col-4">
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--secondary);">💳 Abonar Pago Quincenal</h3>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Cuota: $200 quincenales (5 fechas oficiales).</p>
+                <form class="action-form" onsubmit="event.preventDefault(); submitPaymentForm();">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input id="pay-pid" class="form-input" placeholder="ID de Miembro (ej: p1)" required>
+                        <input id="pay-amount" type="number" step="0.01" class="form-input" placeholder="Monto en MXN" value="200.00" required>
+                        <button type="submit" class="btn btn-secondary">💳 Abonar Pago Quincenal</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Formulario 3: Registrar Actividad Diaria -->
+            <div class="card col-8">
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">🏃 Registrar Actividad Diaria</h3>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Meta diaria: $\ge 300$ kcal o $\ge 10,000$ pasos (requiere 4 días exitosos/semana).</p>
+                <form class="action-form" onsubmit="event.preventDefault(); submitActivityForm();">
+                    <div class="form-row" style="flex-wrap: wrap;">
+                        <input id="act-pid" class="form-input" placeholder="ID (ej: p1)" required style="flex: 1; min-width: 90px;">
+                        <input id="act-week" type="number" min="1" max="9" class="form-input" placeholder="Sem (1-9)" value="1" required style="width: 95px;">
+                        <input id="act-day" type="number" min="1" max="7" class="form-input" placeholder="Día (1-7)" value="1" required style="width: 90px;">
+                        <input id="act-cals" type="number" min="0" class="form-input" placeholder="Calorías" value="350" style="width: 105px;">
+                        <input id="act-steps" type="number" min="0" class="form-input" placeholder="Pasos" value="5000" style="width: 105px;">
+                        <button type="submit" class="btn">Guardar Día</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Formulario 4: Liquidar Semana -->
+            <div class="card col-4">
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--neon-accent);">⚖️ Liquidar Semana</h3>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Penaliza $100 por incumplimiento y reparte la bolsa.</p>
+                <form class="action-form" onsubmit="event.preventDefault(); submitCloseWeekForm();">
+                    <div style="display: flex; gap: 8px;">
+                        <input id="close-week" type="number" min="1" max="9" class="form-input" placeholder="Semana (1-9)" value="1" required style="width: 110px;">
+                        <button type="submit" class="btn" style="background: var(--neon-accent); color: #0F172A; flex: 1;">Liquidar Semana</button>
+                    </div>
+                </form>
             </div>
 
             <!-- Tabla General de Concentrado -->
@@ -427,16 +468,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
             }}
         }}
 
-        async function recordPaymentPrompt() {{
-            const pid = prompt("ID del miembro que abona (ej: p1):");
-            if (!pid) return;
-            const amtStr = prompt("Monto del abono en MXN (Cuota: $200 por quincena):", "200.00");
-            if (!amtStr) return;
-            const amount = parseFloat(amtStr);
-            if (isNaN(amount) || amount <= 0) {{
-                alert("Por favor ingresa un monto numérico positivo.");
-                return;
-            }}
+        async function quickPay(pid, amount) {{
             const res = await fetch('/api/payments', {{
                 method: 'POST',
                 headers: {{ 'Content-Type': 'application/json' }},
@@ -444,23 +476,33 @@ def render_dashboard_html(service: ChallengeService) -> str:
             }});
             if (res.ok) {{
                 const data = await res.json();
-                alert("¡Abono registrado! Total aportado acumulado: $" + data.total_contributed.toFixed(2));
+                alert("¡Abono de $" + amount.toFixed(2) + " registrado para " + pid + "! Acumulado: $" + data.total_contributed.toFixed(2));
                 window.location.reload();
             }} else {{
                 const err = await res.json();
-                alert(err.detail || 'Error al registrar el abono');
+                alert(err.detail || 'Error al registrar abono');
             }}
         }}
 
-        async function recordActivityPrompt() {{
-            const pid = prompt("ID del miembro (ej: p1):");
-            if (!pid) return;
-            const weekStr = prompt("Número de semana (1 a 9):", "1");
-            if (!weekStr) return;
-            const dayStr = prompt("Día de la semana (1 a 7):", "1");
-            if (!dayStr) return;
-            const calStr = prompt("Calorías quemadas (meta >= 300 kcal):", "350");
-            const stepsStr = prompt("Pasos caminados (meta >= 10,000 pasos):", "5000");
+        async function submitPaymentForm() {{
+            const pid = document.getElementById('pay-pid').value.trim();
+            const amtStr = document.getElementById('pay-amount').value.trim();
+            if (!pid || !amtStr) return;
+            const amount = parseFloat(amtStr);
+            if (isNaN(amount) || amount <= 0) {{
+                alert("Por favor ingresa un monto válido mayor a 0.");
+                return;
+            }}
+            await quickPay(pid, amount);
+        }}
+
+        async function submitActivityForm() {{
+            const pid = document.getElementById('act-pid').value.trim();
+            const weekStr = document.getElementById('act-week').value.trim();
+            const dayStr = document.getElementById('act-day').value.trim();
+            const calStr = document.getElementById('act-cals').value.trim();
+            const stepsStr = document.getElementById('act-steps').value.trim();
+            if (!pid || !weekStr || !dayStr) return;
 
             const res = await fetch('/api/activity', {{
                 method: 'POST',
@@ -475,7 +517,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
             }});
             if (res.ok) {{
                 const data = await res.json();
-                const statusMsg = data.is_successful ? "¡DÍA EXITOSO! Cumple con la meta." : "Día registrado (no alcanzó meta diaria).";
+                const statusMsg = data.is_successful ? "¡DÍA EXITOSO! Cumple con la meta (>= 300 kcal o >= 10,000 pasos)." : "Día registrado (no alcanzó la meta diaria).";
                 alert(statusMsg);
                 window.location.reload();
             }} else {{
@@ -484,8 +526,8 @@ def render_dashboard_html(service: ChallengeService) -> str:
             }}
         }}
 
-        async function closeWeekPrompt() {{
-            const weekStr = prompt("Número de semana a liquidar (1 a 9):", "1");
+        async function submitCloseWeekForm() {{
+            const weekStr = document.getElementById('close-week').value.trim();
             if (!weekStr) return;
             const res = await fetch('/api/weeks/' + encodeURIComponent(weekStr) + '/close', {{
                 method: 'POST'
