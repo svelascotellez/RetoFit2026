@@ -17,18 +17,22 @@ Esta funcionalidad integra:
 - **Paquetes Requeridos:** `fastapi`, `uvicorn`, `pydantic`.
 
 ### Variables de Entorno (Opcionales)
-- `PORT`: Puerto de escucha del servidor HTTP (por defecto `8000`, asignado automáticamente por Railway en producción).
+- `PORT`: Puerto de escucha del servidor HTTP (por defecto `8010`, asignado automáticamente por Railway en producción).
 - `HOST`: Dirección de enlace de red (por defecto `0.0.0.0`).
 
 ### Ejecucion Local
 Para iniciar el servidor web y la API en su máquina local:
 ```powershell
-python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn src.main:app --host 0.0.0.0 --port 8010 --reload
+```
+O directamente ejecutando el script principal:
+```powershell
+python src/main.py
 ```
 Una vez iniciado, acceda a:
-- **Dashboard Web:** [http://localhost:8000/](http://localhost:8000/)
-- **Documentación Interactiva Swagger / OpenAPI:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Especificación OpenAPI JSON:** [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+- **Dashboard Web:** [http://localhost:8010/](http://localhost:8010/)
+- **Documentación Interactiva Swagger / OpenAPI:** [http://localhost:8010/docs](http://localhost:8010/docs)
+- **Especificación OpenAPI JSON:** [http://localhost:8010/openapi.json](http://localhost:8010/openapi.json)
 
 ### Despliegue en Railway.com
 En Railway, configure el comando de inicio en la pestaña *Settings -> Deploy*:
@@ -104,7 +108,7 @@ Railway utilizará el endpoint `GET /health` como healthcheck de monitoreo conti
 
 ### 4.1 Verificacion de Salud del Servicio (`GET /health`)
 ```bash
-curl -X GET http://localhost:8000/health
+curl -X GET http://localhost:8010/health
 ```
 **Respuesta esperada (200 OK):**
 ```json
@@ -115,7 +119,7 @@ curl -X GET http://localhost:8000/health
 
 ### 4.2 Registro de Participante (`POST /api/participants`)
 ```bash
-curl -X POST http://localhost:8000/api/participants \
+curl -X POST http://localhost:8010/api/participants \
   -H "Content-Type: application/json" \
   -d '{"id": "didt-01", "name": "Carlos Gomez"}'
 ```
@@ -135,7 +139,7 @@ curl -X POST http://localhost:8000/api/participants \
 
 ### 4.3 Abono de Pago Quincenal (`POST /api/payments`)
 ```bash
-curl -X POST http://localhost:8000/api/payments \
+curl -X POST http://localhost:8010/api/payments \
   -H "Content-Type: application/json" \
   -d '{"participant_id": "didt-01", "amount": 200.0}'
 ```
@@ -151,7 +155,7 @@ curl -X POST http://localhost:8000/api/payments \
 
 ### 4.4 Registro de Actividad (`POST /api/activity`)
 ```bash
-curl -X POST http://localhost:8000/api/activity \
+curl -X POST http://localhost:8010/api/activity \
   -H "Content-Type: application/json" \
   -d '{"participant_id": "didt-01", "week_number": 1, "day_number": 1, "calories": 350, "steps": 5000}'
 ```
@@ -167,7 +171,7 @@ curl -X POST http://localhost:8000/api/activity \
 
 ### 4.5 Cierre y Liquidacion Semanal (`POST /api/weeks/1/close`)
 ```bash
-curl -X POST http://localhost:8000/api/weeks/1/close
+curl -X POST http://localhost:8010/api/weeks/1/close
 ```
 **Respuesta esperada (200 OK):**
 ```json
@@ -183,7 +187,7 @@ curl -X POST http://localhost:8000/api/weeks/1/close
 
 ### 4.6 Concentrado General (`GET /api/summary`)
 ```bash
-curl -X GET http://localhost:8000/api/summary
+curl -X GET http://localhost:8010/api/summary
 ```
 **Respuesta esperada (200 OK):**
 ```json
