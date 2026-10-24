@@ -2,7 +2,7 @@
 Capa de Aplicacion: Servicio Orquestador del Reto Fit
 Criterios EARS: AC-1.1 a AC-1.8
 """
-from typing import Dict, List
+from typing import Dict, List, Optional
 from src.domain.activity import DailyActivity
 from src.domain.challenge_week import ChallengeWeek
 from src.domain.challenge_pool import WeeklyPool
@@ -16,10 +16,12 @@ from src.application.dto import (
     ParticipantSummaryDTO,
     GeneralSummaryDTO,
 )
+from src.application.repository import ChallengeRepository
 
 
 class ChallengeService:
-    def __init__(self) -> None:
+    def __init__(self, repository: Optional[ChallengeRepository] = None) -> None:
+        self.repository = repository
         self.participants: Dict[str, Participant] = {}
         self.weeks: Dict[int, ChallengeWeek] = {}
         self.pools: Dict[int, WeeklyPool] = {}
@@ -27,6 +29,49 @@ class ChallengeService:
         self.participant_met_weeks: Dict[str, int] = {}
         self.participant_missed_weeks: Dict[str, int] = {}
         self.current_rollover: float = 0.0
+
+        if self.repository is not None:
+            self._rehydrate()
+
+    def _rehydrate(self) -> None:
+        """Restaura el estado completo desde el repositorio de persistencia."""
+        if self.repository is None:
+            return
+        state = self.repository.load_all_state()
+
+        # 1. Participantes y sus pagos
+        for p in state.get("participants", []):
+            self.participants[p.id] = p
+            self.accumulated_earnings[p.id] = 0.0
+            self.participant_met_weeks[p.id] = 0
+            self.participant_missed_weeks[p.id] = 0
+
+        # 2. Actividades diarias
+        activities_map = state.get("activities", {})
+        for p_id, act_list in activities_map.items():
+            if p_id in self.participants:
+                for a in act_list:
+                    act_obj = DailyActivity(calories=a["calories"], steps=a["steps"])
+                    self.participants[p_id].record_activity(
+                        week_number=a["week_number"],
+                        day_of_week=a["day_of_week"],
+                        activity=act_obj,
+                    )
+
+        # 3. Cierres semanales acumulados
+        for close in state.get("weekly_closes", []):
+            payout = close["payout_per_compliant"]
+            for cid in close["compliant_participants"]:
+                if cid in self.accumulated_earnings:
+                    self.accumulated_earnings[cid] = round(self.accumulated_earnings[cid] + payout, 2)
+                if cid in self.participant_met_weeks:
+                    self.participant_met_weeks[cid] += 1
+            for nid in close["non_compliant_participants"]:
+                if nid in self.participant_missed_weeks:
+                    self.participant_missed_weeks[nid] += 1
+
+        # 4. Rollover
+        self.current_rollover = float(state.get("rollover", 0.0))
 
     def register_participant(self, dto: RegisterParticipantDTO) -> Participant:
         """Registra un nuevo participante en el sistema."""
@@ -37,6 +82,8 @@ class ChallengeService:
         self.accumulated_earnings[dto.id] = 0.0
         self.participant_met_weeks[dto.id] = 0
         self.participant_missed_weeks[dto.id] = 0
+        if self.repository is not None:
+            self.repository.save_participant(p)
         return p
 
     def record_payment(self, dto: RecordPaymentDTO) -> float:
@@ -45,6 +92,8 @@ class ChallengeService:
             raise KeyError(f"Participante {dto.participant_id} no encontrado")
         participant = self.participants[dto.participant_id]
         participant.add_contribution(dto.amount)
+        if self.repository is not None:
+            self.repository.record_payment(dto.participant_id, dto.amount)
         return participant.total_contributed
 
     def record_daily_activity(self, dto: RecordActivityDTO) -> bool:
@@ -58,6 +107,13 @@ class ChallengeService:
             day_of_week=dto.day_of_week,
             activity=activity,
         )
+        if self.repository is not None:
+            self.repository.record_activity(
+                participant_id=dto.participant_id,
+                week_number=dto.week_number,
+                day_of_week=dto.day_of_week,
+                activity=activity,
+            )
         return activity.is_successful()
 
     def close_and_liquidate_week(self, week_number: int) -> WeeklyCloseResultDTO:
@@ -91,6 +147,16 @@ class ChallengeService:
         self.current_rollover = rollover
         self.weeks[week_number] = week
         self.pools[week_number] = pool
+
+        if self.repository is not None:
+            self.repository.record_week_close(
+                week_number=week_number,
+                compliant_ids=list(week.met_participants),
+                non_compliant_ids=list(week.missed_participants),
+                pool_collected=pool.current_total,
+                rollover_amount=rollover,
+                payout_per_compliant=gain_per_person,
+            )
 
         return WeeklyCloseResultDTO(
             week_number=week_number,

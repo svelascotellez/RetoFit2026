@@ -16,5 +16,14 @@
         "status":  "done",
         "approval_hash":  "85AECA91AC99E74DDB05B4E990A212E27A459998F0A56A8B2BCA43FC5648F67F",
         "approved_at":  "2026-10-23T22:26:09Z"
+    },
+    {
+        "id":  "FEAT-003",
+        "name":  "Persistencia de Datos en SQLite para Reto Fit",
+        "description":  "Almacenamiento persistente en SQLite para participantes, aportaciones quincenales, actividades físicas diarias y liquidaciones de bolsa, asegurando la supervivencia de los datos ante reinicios.",
+        "feature_dir":  "003-persistencia-sqlite",
+        "status":  "done",
+        "approval_hash":  "BB9F68A2536FB0400740791F7D7623EF3675B53EC3FFBAABD6B4E58A18B79B88",
+        "approved_at":  "2026-10-23T23:01:27Z"
     }
 ]

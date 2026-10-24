@@ -26,7 +26,12 @@ from src.presentation.schemas import (
 router = APIRouter()
 
 
-_service_instance = ChallengeService()
+import os
+from src.infrastructure.sqlite_repository import SQLiteChallengeRepository
+
+_db_path = os.environ.get("RETOFIT_DB_PATH", "data/retofit.db")
+_sqlite_repo = SQLiteChallengeRepository(db_path=_db_path)
+_service_instance = ChallengeService(repository=_sqlite_repo)
 
 
 def get_challenge_service() -> ChallengeService:
