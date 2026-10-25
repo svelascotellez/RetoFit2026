@@ -11,7 +11,7 @@ from src.domain.activity import DailyActivity
 class Participant:
     id: str
     name: str
-    TARGET_CONTRIBUTION: float = 1000.0
+    TARGET_CONTRIBUTION: float = 900.0
     MAX_CONTRIBUTIONS: int = 5
     contributions: List[float] = field(default_factory=list)
     # activities: week_number -> {day_of_week -> DailyActivity}
@@ -23,7 +23,7 @@ class Participant:
         return round(sum(self.contributions), 2)
 
     def add_contribution(self, amount: float) -> None:
-        """Registra un pago quincenal de aportacion hacia la meta de $1,000."""
+        """Registra un pago quincenal de aportacion hacia la meta de $900."""
         if amount <= 0:
             raise ValueError("Monto debe ser mayor a cero")
         if len(self.contributions) >= self.MAX_CONTRIBUTIONS:

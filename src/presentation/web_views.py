@@ -23,7 +23,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
             participants_rows += f"""
             <tr>
                 <td><strong>{p.name}</strong> <span class="text-muted">({p.participant_id})</span></td>
-                <td><strong>${p.total_contributed:.2f}</strong> <span class="text-muted">/ $1,000.00</span></td>
+                <td><strong>${p.total_contributed:.2f}</strong> <span class="text-muted">/ $900.00</span></td>
                 <td>{status_badge}</td>
                 <td>{p.weeks_missed}</td>
                 <td class="text-error">-${p.total_penalties:.2f}</td>
@@ -32,6 +32,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 <td>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                         <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="quickPay('{p.participant_id}', 200)" title="Abonar $200 quincenales">+ $200</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="quickPay('{p.participant_id}', 100)" title="Abonar $100 final">+ $100</button>
                         <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="undoPayment('{p.participant_id}')" title="Anular último abono">↩️ Anular</button>
                         <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="editParticipant('{p.participant_id}', '{p.name}')" title="Editar nombre">✏️ Editar</button>
                         <button class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: var(--error); color: white;" onclick="confirmDeleteParticipant('{p.participant_id}', '{p.name}')" title="Eliminar participante">🗑️</button>
@@ -45,7 +46,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 <thead>
                     <tr>
                         <th scope="col">Participante</th>
-                        <th scope="col">Aportado (Meta $1,000)</th>
+                        <th scope="col">Aportado (Meta $900)</th>
                         <th scope="col">Semanas Cumplidas</th>
                         <th scope="col">Semanas Incumplidas</th>
                         <th scope="col">Penalizaciones</th>
@@ -392,18 +393,18 @@ def render_dashboard_html(service: ChallengeService) -> str:
             <div class="card col-4">
                 <div class="metric-title">Fondo Total Aportado</div>
                 <div class="metric-value secondary">${summary.total_funds_collected:.2f}</div>
-                <p class="text-muted" style="margin-top: 8px;">Meta total: 5 quincenas de $200 = $1,000 por miembro.</p>
+                <p class="text-muted" style="margin-top: 8px;">Meta total: 4 quincenas de $200 + 1 semana de $100 = $900 por miembro.</p>
             </div>
 
             <!-- Calendario de Pagos -->
             <div class="card col-4">
-                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Fechas de Aportación ($1,000)</h3>
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Fechas de Aportación ($900.00)</h3>
                 <ul class="dates-list">
                     <li class="date-item"><span>1. 19 de octubre</span><span class="amount">$200.00</span></li>
                     <li class="date-item"><span>2. 2 de noviembre</span><span class="amount">$200.00</span></li>
                     <li class="date-item"><span>3. 16 de noviembre</span><span class="amount">$200.00</span></li>
                     <li class="date-item"><span>4. 30 de noviembre</span><span class="amount">$200.00</span></li>
-                    <li class="date-item"><span>5. 14 de diciembre</span><span class="amount">$200.00</span></li>
+                    <li class="date-item"><span>5. 14 de diciembre (1 sem)</span><span class="amount">$100.00</span></li>
                 </ul>
             </div>
 
@@ -429,7 +430,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
             <!-- Formulario 2: Abonar Pago Quincenal -->
             <div class="card col-4">
                 <h3 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--secondary);">💳 Abonar Pago Quincenal</h3>
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Cuota: $200 quincenales (5 fechas oficiales).</p>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Cuota: 4 de $200 + 1 final de $100 ($900 en 5 fechas).</p>
                 <form class="action-form" onsubmit="event.preventDefault(); submitPaymentForm();">
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <div class="form-group">

@@ -34,5 +34,14 @@
         "status":  "done",
         "approval_hash":  "098759A53537E855138E9CD3565360DED2687C8F94EF814E983BF4690B1E6741",
         "approved_at":  "2026-10-24T20:24:38Z"
+    },
+    {
+        "id":  "FEAT-005",
+        "name":  "Ajuste de Cuota Financiera y Calendario de Aportaciones",
+        "description":  "Ajuste de la cuota total a $900 MXN distribuida en 5 aportaciones: 4 quincenales de $200 (19 oct, 2 nov, 16 nov, 30 nov) y 1 final de $100 (14 dic) correspondiente a la semana 9, actualizando la meta, métricas, botones rápidos y calendario visual.",
+        "feature_dir":  "005-ajuste-cuota-final",
+        "status":  "done",
+        "approval_hash":  "5987D0031A0FFBD901F71ED242FFE81A1B42245C374816BB35C27FEF948596B5",
+        "approved_at":  "2026-10-24T20:53:11Z"
     }
 ]

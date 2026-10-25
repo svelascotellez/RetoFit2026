@@ -7,10 +7,10 @@ from src.domain.activity import DailyActivity
 
 
 def test_ac_1_6_participant_contributions():
-    # AC-1.6: Registro de aportaciones acumulativas hasta 1000 pesos
+    # AC-1.6 / AC-5.1: Registro de aportaciones acumulativas hasta 900 pesos (ajustado en FEAT-005)
     p = Participant(id="p1", name="Jorge")
     assert p.total_contributed == 0.0
-    assert p.TARGET_CONTRIBUTION == 1000.0
+    assert p.TARGET_CONTRIBUTION == 900.0
 
     p.add_contribution(200.0)
     assert p.total_contributed == 200.0

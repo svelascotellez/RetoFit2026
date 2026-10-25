@@ -14,7 +14,7 @@ class ParticipantResponseSchema(BaseModel):
     id: str
     name: str
     total_contributed: float
-    target_contribution: float = 1000.0
+    target_contribution: float = 900.0
 
 
 class PaymentCreateSchema(BaseModel):
@@ -25,7 +25,7 @@ class PaymentCreateSchema(BaseModel):
 class PaymentResponseSchema(BaseModel):
     participant_id: str
     total_contributed: float
-    target_contribution: float = 1000.0
+    target_contribution: float = 900.0
 
 
 class ActivityCreateSchema(BaseModel):
