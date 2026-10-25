@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Secuencia de Operación Setup SDD v4.3</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .slide-content { transition: opacity 0.25s ease-in-out; }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-3 sm:p-5 select-none">
+
+  <!-- Slide Deck Card Container -->
+  <div class="max-w-4xl mx-auto bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-[580px]">
+    
+    <!-- Top Bar: Header & Progress Indicator -->
+    <div class="px-6 py-4 border-b border-[var(--border)] bg-[var(--sidebar)] flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/20 text-blue-500 font-bold text-sm">
+          SDD
+        </span>
+        <div>
+          <h1 class="text-sm font-semibold text-[var(--foreground)] leading-none">Secuencia de Operación Setup SDD v4.3</h1>
+          <p class="text-xs text-[var(--muted-foreground)] mt-1">Spec-Driven Development + BDD + Clean Architecture + UI/UX Pro Max</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="slideCounter" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)]">
+          1 / 9
+        </span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-[var(--background)] h-1.5">
+      <div id="progressBar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 h-1.5 transition-all duration-300" style="width: 11.1%;"></div>
+    </div>
+
+    <!-- Main Slide Body -->
+    <div class="flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
+      
+      <!-- Slide Container -->
+      <div id="slideContent" class="slide-content">
+        <!-- Injected via JavaScript -->
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="px-6 py-4 border-t border-[var(--border)] bg-[var(--sidebar)] flex items-center justify-between">
+      <button id="prevBtn" onclick="prevSlide()" class="px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--background)] text-xs font-medium text-[var(--foreground)] transition flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+        <span>←</span> Anterior
+      </button>
+
+      <!-- Dots Indicator -->
+      <div id="dotsContainer" class="flex items-center gap-1.5">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <button id="nextBtn" onclick="nextSlide()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-sm transition flex items-center gap-2 cursor-pointer">
+        Siguiente <span>→</span>
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    const slides = [
+      {
+        phase: "VISIÓN GENERAL",
+        title: "El Ciclo de Vida Determinista de SDD",
+        subtitle: "De la intención humana al código verificado sin alucinaciones",
+        badge: "Fundamentos Metodológicos",
+        badgeColor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        content: `
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-sm mb-3">1</div>
+              <h3 class="font-semibold text-sm mb-1 text-[var(--foreground)]">Spec-Driven Development</h3>
+              <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">Ningún código se escribe sin especificación EARS previa y scenarios Gherkin auditados.</p>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-sm mb-3">2</div>
+              <h3 class="font-semibold text-sm mb-1 text-[var(--foreground)]">Clean Architecture & UI/UX</h3>
+              <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">Capa presentation aislada, tokens de diseño centralizados y cero imports impuros en domain.</p>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-sm mb-3">3</div>
+              <h3 class="font-semibold text-sm mb-1 text-[var(--foreground)]">Candado Criptográfico</h3>
+              <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">Firma SHA-256 obligatoria antes de codificar. Si la spec cambia sin permiso, el arnés se bloquea.</p>
+            </div>
+          </div>
+          <div class="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20 text-xs text-[var(--foreground)] flex items-center gap-2">
+            <span class="text-blue-500 text-sm">💡</span>
+            <span><strong>Regla de oro:</strong> El flujo transiciona paso a paso mediante conversación natural en Antigravity IDE y verificación estricta en PowerShell.</span>
+          </div>
+        `
+      },
+      {
+        phase: "FASE 0",
+        title: "Inicialización de Infraestructura",
+        subtitle: "Ejecución única para estructurar el proyecto de forma limpia",
+        badge: "Paso Único: Terminal",
+        badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+        content: `
+          <div class="space-y-4 my-2">
+            <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] font-mono text-xs text-emerald-400">
+              PS C:\\MiProyecto> .\\setup-sdd-project-v43.ps1
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+                <h4 class="font-semibold text-[var(--foreground)] mb-1 flex items-center gap-2">
+                  <span class="text-blue-500">📁</span> Estructura Creada
+                </h4>
+                <ul class="space-y-1 text-[var(--muted-foreground)]">
+                  <li>• Capas: <code class="text-blue-400">src/domain</code>, <code class="text-blue-400">application</code>, <code class="text-blue-400">infrastructure</code>, <code class="text-blue-400">presentation</code></li>
+                  <li>• Sistema de Diseño: <code class="text-indigo-400">.specify/design-system/design-tokens.json</code></li>
+                  <li>• Arnés: <code class="text-amber-400">harness/init.ps1</code>, <code class="text-amber-400">sdd.ps1</code>, <code class="text-amber-400">spec-gate.ps1</code></li>
+                  <li>• Git Hook: <code class="text-emerald-400">.git/hooks/pre-commit</code></li>
+                </ul>
+              </div>
+              <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+                <h4 class="font-semibold text-[var(--foreground)] mb-1 flex items-center gap-2">
+                  <span class="text-emerald-500">📋</span> Salida y Traspaso
+                </h4>
+                <p class="text-[var(--muted-foreground)] leading-relaxed">
+                  El script termina imprimiendo el banner de éxito y copia automáticamente el prompt al portapapeles.
+                </p>
+                <div class="mt-3 p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-[11px]">
+                  ✓ Listo para pasar al panel "Agent" en Antigravity IDE
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        phase: "FASE 1",
+        title: "Descubrimiento & Onboarding Conversacional",
+        subtitle: "Entrevista interactiva guiada: exactamente 1 pregunta por turno",
+        badge: "Skill: sdd-onboard",
+        badgeColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+        content: `
+          <p class="text-xs text-[var(--muted-foreground)] mb-3">
+            El desarrollador escribe <code class="text-emerald-400">inicia el onboarding</code> en el chat. El Agente formula las preguntas una por una:
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <span class="text-indigo-400 font-bold">1-2</span>
+              <p class="font-medium text-[var(--foreground)] mt-0.5">Propósito & Interfaz</p>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Problema a resolver, tipo de interfaz (CLI, Web, Móvil, Desktop o Backend).</p>
+            </div>
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <span class="text-indigo-400 font-bold">3-5</span>
+              <p class="font-medium text-[var(--foreground)] mt-0.5">Stack, UI/UX & Calidad</p>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Lenguaje, arquetipo visual, paleta de colores, WCAG 2.1 AA, linter y test runner.</p>
+            </div>
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <span class="text-indigo-400 font-bold">6-9</span>
+              <p class="font-medium text-[var(--foreground)] mt-0.5">Definición de FEAT-001</p>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Nombre, rol de usuario, casos borde, estados UI (loading, empty, error) y fuera de alcance.</p>
+            </div>
+          </div>
+          <div class="mt-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] flex items-center justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">Artefactos actualizados al finalizar:</span>
+            <div class="flex gap-2">
+              <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono text-[10px]">constitution.md</span>
+              <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono text-[10px]">design-tokens.json</span>
+              <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[10px]">feature_list.json [pending]</span>
+            </div>
+          </div>
+        `
+      },
+      {
+        phase: "FASE 2",
+        title: "Especificación Formal y BDD",
+        subtitle: "Redacción de contratos funcionales y comportamiento ejecutable",
+        badge: "Skills: sdd-specify + sdd-clarify",
+        badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        content: `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2 text-xs">
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-blue-400">specs/001-&lt;feat&gt;/spec.md</span>
+                <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">EARS</span>
+              </div>
+              <ul class="space-y-1.5 text-[var(--muted-foreground)] leading-relaxed">
+                <li>• <strong>Criterios EARS:</strong> CUANDO [evento], SI [error], MIENTRAS [estado] EL SISTEMA DEBE.</li>
+                <li>• <strong>Casos Borde:</strong> Entradas vacías, límites numéricos.</li>
+                <li>• <strong>Fuera de Alcance:</strong> Lo que NO se construirá.</li>
+                <li>• <strong class="text-amber-400">Allowed Files:</strong> Lista blanca estricta de rutas autorizadas para esta feature.</li>
+              </ul>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-emerald-400">specs/001-&lt;feat&gt;/scenarios.feature</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px]">Gherkin</span>
+              </div>
+              <ul class="space-y-1.5 text-[var(--muted-foreground)] leading-relaxed">
+                <li>• Escenarios en español (<code class="text-emerald-400"># language: es</code>).</li>
+                <li>• Cada <code class="text-amber-400">AC-x.x</code> tiene su tag <code class="text-amber-400">@AC-x.x</code> obligatorio.</li>
+                <li>• Semántica accesible: roles, estados y atributos ARIA.</li>
+                <li>• <span class="text-red-400 font-semibold">Prohibido:</span> Aserciones de clases CSS cosméticas.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-center justify-between">
+            <span>Transición en feature_list.json:</span>
+            <span class="font-mono font-bold bg-amber-500/20 px-2 py-0.5 rounded">status: "spec_ready"</span>
+          </div>
+        `
+      },
+      {
+        phase: "FASE 3",
+        title: "Candado Criptográfico SHA-256",
+        subtitle: "Human-in-the-Loop: Aprobación formal inmutable en el chat",
+        badge: "Candado de Seguridad",
+        badgeColor: "bg-red-500/10 text-red-400 border-red-500/20",
+        content: `
+          <div class="p-4 rounded-xl border border-red-500/20 bg-red-500/5 my-2 text-xs">
+            <h4 class="font-semibold text-red-400 mb-2 flex items-center gap-2">
+              <span>🔒</span> Regla Innegociable de Gobierno
+            </h4>
+            <p class="text-[var(--foreground)] leading-relaxed">
+              Queda estrictamente prohibido escribir código en <code class="text-amber-400">src/</code> sin la firma criptográfica humana. Si la spec cambia tras ser aprobada, el arnés detecta <em>Spec Tampering</em> y aborta.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs my-3">
+            <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <span class="text-blue-400 font-bold">1. Interacción en Chat</span>
+              <p class="text-[var(--muted-foreground)] mt-1">El Agente pregunta: <em>«¿Apruebas la especificación de FEAT-001 para desbloquear la implementación?»</em></p>
+              <div class="mt-2 text-emerald-400 font-medium">Usuario responde: "Sí, aprobado"</div>
+            </div>
+            <div class="p-3 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <span class="text-purple-400 font-bold">2. Ejecución Automática</span>
+              <p class="text-[var(--muted-foreground)] mt-1">El Agente ejecuta internamente:</p>
+              <code class="text-[11px] text-purple-300 block mt-1 bg-[var(--card)] p-1.5 rounded">.\\harness\\sdd.ps1 -Action approve -FeatureId FEAT-001 -Force</code>
+            </div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">Registro inmutable en CHECKPOINTS.md:</span>
+            <span class="font-mono text-emerald-400 font-bold text-[11px]">status: "in_progress" | SHA-256: 4f8b2c1e...</span>
+          </div>
+        `
+      },
+      {
+        phase: "FASE 4",
+        title: "Diseño Técnico y Desglose de Tareas",
+        subtitle: "Clean Architecture, UI/UX Design System y descomposición TDD",
+        badge: "Skills: sdd-plan + sdd-tasks",
+        badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+        content: `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-2 text-xs">
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-purple-400">specs/.../plan.md</span>
+                <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 text-[10px]">Técnico</span>
+              </div>
+              <ul class="space-y-1.5 text-[var(--muted-foreground)] leading-relaxed">
+                <li>• <strong>1. Clean Arch Breakdown:</strong> domain, application, infrastructure, presentation.</li>
+                <li>• <strong>2. UI/UX Design System:</strong> Arquetipo visual, paleta, tipografía y <span class="text-indigo-400 font-semibold">5 estados obligatorios</span> de cada componente.</li>
+                <li>• <strong>3. Testing Strategy:</strong> Mapeo BDD a unit tests.</li>
+                <li>• <strong>4. Allowed Dependencies:</strong> Librerías aprobadas.</li>
+              </ul>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-cyan-400">specs/.../tasks.md</span>
+                <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 text-[10px]">Atómico</span>
+              </div>
+              <ul class="space-y-1.5 text-[var(--muted-foreground)] leading-relaxed">
+                <li>• Tareas atómicas de 20 a 30 minutos.</li>
+                <li>• Cada tarea indica qué prueba pasa de Rojo a Verde.</li>
+                <li>• Trazabilidad directa a etiquetas <code class="text-cyan-400">@AC-x.x</code>.</li>
+                <li>• <strong class="text-emerald-400">Tarea obligatoria innegociable:</strong> Redacción de la Guía de Usuario en <code class="text-emerald-400">docs/user_guide_...md</code>.</li>
+              </ul>
+            </div>
+          </div>
+        `
+      },
+      {
+        phase: "FASE 5",
+        title: "Implementación Double-Loop TDD",
+        subtitle: "Doble bucle riguroso de pruebas automatizadas: de Rojo a Verde",
+        badge: "Skill: sdd-implement",
+        badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        content: `
+          <div class="p-4 rounded-xl border border-[var(--border)] bg-[var(--background)] my-2 text-xs">
+            <div class="flex items-center justify-around text-center mb-4">
+              <div class="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-semibold w-28">
+                1. Test en ROJO<br><span class="text-[10px] font-normal text-[var(--muted-foreground)]">Falla primero</span>
+              </div>
+              <span class="text-lg text-[var(--muted-foreground)]">→</span>
+              <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold w-28">
+                2. Código VERDE<br><span class="text-[10px] font-normal text-[var(--muted-foreground)]">Implementación mínima</span>
+              </div>
+              <span class="text-lg text-[var(--muted-foreground)]">→</span>
+              <div class="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-semibold w-28">
+                3. REFACTOR<br><span class="text-[10px] font-normal text-[var(--muted-foreground)]">init.ps1 Exit 0</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-[var(--muted-foreground)]">
+              <div class="p-2.5 rounded bg-[var(--card)] border border-[var(--border)]">
+                <strong class="text-[var(--foreground)]">Bucle Externo (Aceptación):</strong> Ejecución de pasos Gherkin en <code class="text-blue-400">tests/acceptance/</code> con step definitions.
+              </div>
+              <div class="p-2.5 rounded bg-[var(--card)] border border-[var(--border)]">
+                <strong class="text-[var(--foreground)]">Bucle Interno (Unitario):</strong> Pruebas aisladas en <code class="text-blue-400">tests/unit/</code> para entidades y casos de uso.
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Cada tarea completada se marca <code class="text-emerald-400">[x]</code> en <code class="text-emerald-400">tasks.md</code> y genera un informe de evidencia en <code class="text-indigo-400">progress/impl_&lt;id&gt;.md</code>.
+          </p>
+        `
+      },
+      {
+        phase: "FASE 6",
+        title: "Guía de Usuario Obligatoria",
+        subtitle: "Documentación clara orientada al usuario final a partir de los BDD",
+        badge: "Skill: sdd-user-guide",
+        badgeColor: "bg-teal-500/10 text-teal-400 border-teal-500/20",
+        content: `
+          <div class="p-4 rounded-xl border border-teal-500/20 bg-teal-500/5 my-2 text-xs">
+            <h4 class="font-semibold text-teal-400 mb-1 flex items-center gap-2">
+              <span>📖</span> docs/user_guide_&lt;feature_dir&gt;.md
+            </h4>
+            <p class="text-[var(--foreground)] leading-relaxed">
+              No es un manual para desarrolladores, sino una guía práctica de uso para el usuario del software, basada fielmente en los escenarios de aceptación Gherkin verificados.
+            </p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs my-3">
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <div class="font-semibold text-[var(--foreground)] mb-1">1. Resumen</div>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Objetivo de la funcionalidad y público objetivo.</p>
+            </div>
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <div class="font-semibold text-[var(--foreground)] mb-1">2. Tutorial</div>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Pasos numerados del flujo principal de uso.</p>
+            </div>
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <div class="font-semibold text-[var(--foreground)] mb-1">3. Errores & FAQ</div>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Casos borde y qué hacer ante mensajes de fallo.</p>
+            </div>
+            <div class="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <div class="font-semibold text-[var(--foreground)] mb-1">4. UI & Accesibilidad</div>
+              <p class="text-[11px] text-[var(--muted-foreground)]">Atajos de teclado y referencia de controles.</p>
+            </div>
+          </div>
+          <div class="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 font-medium">
+            ⚠️ Si este archivo falta o está incompleto, el Check 6 de spec-gate.ps1 rechazará el cierre.
+          </div>
+        `
+      },
+      {
+        phase: "FASE 7",
+        title: "Auditoría Séptuple y Cierre de Feature",
+        subtitle: "Compuerta estricta spec-gate.ps1 antes de declarar 'done'",
+        badge: "Skill: sdd-validate",
+        badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        content: `
+          <div class="space-y-1.5 my-2 text-xs">
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 1: Allowed Files:</strong> Solo se tocaron archivos de la lista blanca.</span>
+              <span class="text-emerald-400 font-bold">✓ Scope OK</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 2: Clean Architecture:</strong> Dominio y aplicación 100% aislados.</span>
+              <span class="text-emerald-400 font-bold">✓ Arch OK</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 3: Allowed Dependencies:</strong> Cero paquetes sorpresa no declarados.</span>
+              <span class="text-emerald-400 font-bold">✓ Deps OK</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 4: BDD Traceability:</strong> Cada AC-x.x tiene tag @AC-x.x en feature.</span>
+              <span class="text-emerald-400 font-bold">✓ BDD OK</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 5: Health & Tests:</strong> Suite de pruebas y tipado pasan al 100%.</span>
+              <span class="text-emerald-400 font-bold">✓ Tests OK</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 6: User Guide Compliance:</strong> docs/user_guide_...md estructurado.</span>
+              <span class="text-emerald-400 font-bold">✓ Guide OK</span>
+            </div>
+            <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] flex items-center justify-between">
+              <span><strong>Check 7: UI/UX Compliance:</strong> Sección de UI/UX válida en plan.md.</span>
+              <span class="text-emerald-400 font-bold">✓ UI/UX OK</span>
+            </div>
+          </div>
+          <div class="mt-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-semibold flex items-center justify-between">
+            <span>🎉 SUPERADO EL AUDITOR SÉPTUPLE</span>
+            <span class="font-mono text-[11px] bg-emerald-500/20 px-2 py-0.5 rounded">status: "done"</span>
+          </div>
+        `
+      }
+    ];
+
+    let currentSlide = 0;
+
+    function renderSlide(index) {
+      const s = slides[index];
+      const container = document.getElementById("slideContent");
+      
+      // Update header counter & progress bar
+      document.getElementById("slideCounter").textContent = `${index + 1} / ${slides.length}`;
+      document.getElementById("progressBar").style.width = `${((index + 1) / slides.length) * 100}%`;
+      
+      // Render Content
+      container.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-500">${s.phase}</span>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${s.badgeColor}">
+            ${s.badge}
+          </span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-[var(--foreground)] tracking-tight">${s.title}</h2>
+        <p class="text-xs sm:text-sm text-[var(--muted-foreground)] mt-1 mb-3">${s.subtitle}</p>
+        <div class="mt-3">
+          ${s.content}
+        </div>
+      `;
+
+      // Update Navigation Buttons
+      document.getElementById("prevBtn").disabled = (index === 0);
+      const nextBtn = document.getElementById("nextBtn");
+      if (index === slides.length - 1) {
+        nextBtn.innerHTML = `Reiniciar <span>↻</span>`;
+      } else {
+        nextBtn.innerHTML = `Siguiente <span>→</span>`;
+      }
+
+      // Render Dots
+      const dots = document.getElementById("dotsContainer");
+      dots.innerHTML = slides.map((_, i) => `
+        <button onclick="goToSlide(${i})" class="w-2.5 h-2.5 rounded-full transition-all ${
+          i === index ? 'bg-blue-500 w-5' : 'bg-[var(--border)] hover:bg-[var(--muted-foreground)]'
+        }" title="Diapositiva ${i + 1}"></button>
+      `).join("");
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+      } else {
+        currentSlide = 0;
+      }
+      renderSlide(currentSlide);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        renderSlide(currentSlide);
+      }
+    }
+
+    function goToSlide(i) {
+      currentSlide = i;
+      renderSlide(currentSlide);
+    }
+
+    // Keyboard Navigation (Arrow Keys)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "Space") {
+        nextSlide();
+      } else if (e.key === "ArrowLeft") {
+        prevSlide();
+      }
+    });
+
+    // Initial render
+    renderSlide(0);
+  </script>
+</body>
+</html>
