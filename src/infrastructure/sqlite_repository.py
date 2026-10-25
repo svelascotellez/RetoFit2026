@@ -274,3 +274,42 @@ class SQLiteChallengeRepository:
                 "weekly_closes": weekly_closes,
                 "rollover": rollover,
             }
+
+    def update_participant_name(self, participant_id: str, new_name: str) -> None:
+        """Actualiza el nombre de un participante registrado."""
+        with self._get_connection() as conn:
+            conn.execute("UPDATE participants SET name = ? WHERE id = ?;", (new_name, participant_id))
+            conn.commit()
+
+    def delete_participant(self, participant_id: str) -> bool:
+        """Elimina un participante y sus registros asociados por clave foranea en cascada."""
+        with self._get_connection() as conn:
+            cur = conn.execute("DELETE FROM participants WHERE id = ?;", (participant_id,))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def delete_last_payment(self, participant_id: str) -> Optional[float]:
+        """Elimina el abono mas reciente de un participante y retorna el monto eliminado."""
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT id, amount FROM payments WHERE participant_id = ? ORDER BY id DESC LIMIT 1;",
+                (participant_id,),
+            ).fetchone()
+            if not row:
+                return None
+            pay_id = row["id"]
+            amount = float(row["amount"])
+            conn.execute("DELETE FROM payments WHERE id = ?;", (pay_id,))
+            conn.commit()
+            return amount
+
+    def delete_activity(self, participant_id: str, week_number: int, day_of_week: int) -> bool:
+        """Elimina el registro de actividad de un dia especifico."""
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                "DELETE FROM activities WHERE participant_id = ? AND week_number = ? AND day_of_week = ?;",
+                (participant_id, week_number, day_of_week),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+

@@ -2,8 +2,9 @@
 Capa de Presentacion: Router FastAPI con Endpoints REST para Reto Fit
 Criterios EARS: AC-2.1 a AC-2.6, AC-2.8
 """
-from typing import Callable
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Callable, Any, Dict
+from pydantic import BaseModel, Field, field_validator
+from fastapi import APIRouter, Depends, HTTPException, status, FastAPI
 from src.application.challenge_service import ChallengeService
 from src.application.dto import (
     RegisterParticipantDTO,
@@ -176,3 +177,121 @@ def close_week(
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+class ParticipantUpdateSchema(BaseModel):
+    name: str = Field(..., min_length=1, description="Nuevo nombre del participante")
+
+    @field_validator("name")
+    @classmethod
+    def validate_name_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("El nombre no puede estar vacio")
+        return v.strip()
+
+
+@router.put(
+    "/api/participants/{participant_id}",
+    response_model=ParticipantResponseSchema,
+    summary="Actualizar nombre de un participante",
+)
+def update_participant(
+    participant_id: str,
+    payload: ParticipantUpdateSchema,
+    service: ChallengeService = Depends(get_challenge_service),
+) -> ParticipantResponseSchema:
+    """Actualiza el nombre de un participante registrado."""
+    try:
+        updated = service.update_participant_name(participant_id, payload.name)
+        return ParticipantResponseSchema(
+            id=updated.id,
+            name=updated.name,
+            total_contributed=updated.total_contributed,
+            target_contribution=updated.TARGET_CONTRIBUTION,
+        )
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+
+@router.delete(
+    "/api/participants/{participant_id}",
+    summary="Eliminar participante y sus registros asociados",
+)
+def delete_participant(
+    participant_id: str,
+    service: ChallengeService = Depends(get_challenge_service),
+) -> Dict[str, Any]:
+    """Elimina en cascada a un participante, sus abonos y sus actividades."""
+    try:
+        service.delete_participant(participant_id)
+        return {"success": True, "message": f"Participante {participant_id} eliminado exitosamente"}
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.delete(
+    "/api/participants/{participant_id}/payments/last",
+    summary="Anular el ultimo abono quincenal de un participante",
+)
+def delete_last_payment(
+    participant_id: str,
+    service: ChallengeService = Depends(get_challenge_service),
+) -> Dict[str, Any]:
+    """Elimina la aportacion mas reciente y reduce el saldo acumulado."""
+    try:
+        removed_amount = service.delete_last_payment(participant_id)
+        current_total = service.participants[participant_id].total_contributed
+        return {
+            "success": True,
+            "removed_amount": removed_amount,
+            "total_contributed": current_total,
+            "message": f"Abono de ${removed_amount:.2f} anulado exitosamente",
+        }
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete(
+    "/api/activities/{participant_id}/weeks/{week_number}/days/{day_of_week}",
+    summary="Eliminar o restablecer la actividad de un dia especifico",
+)
+def delete_activity(
+    participant_id: str,
+    week_number: int,
+    day_of_week: int,
+    service: ChallengeService = Depends(get_challenge_service),
+) -> Dict[str, Any]:
+    """Elimina el registro de actividad fisica de un dia y semana especificos."""
+    try:
+        removed = service.delete_daily_activity(participant_id, week_number, day_of_week)
+        return {
+            "success": True,
+            "removed": removed,
+            "message": f"Actividad del dia {day_of_week} semana {week_number} eliminada",
+        }
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+def create_app(service: ChallengeService) -> FastAPI:
+    """Crea una aplicacion FastAPI configurada con una instancia de servicio dada."""
+    test_app = FastAPI(title="Reto Fit API")
+    test_app.include_router(router)
+    test_app.dependency_overrides[get_challenge_service] = lambda: service
+
+    from src.presentation.web_views import render_dashboard_html
+    from fastapi.responses import HTMLResponse
+
+    @test_app.get("/", response_class=HTMLResponse)
+    def root_view() -> HTMLResponse:
+        return HTMLResponse(content=render_dashboard_html(service))
+
+    return test_app
+
+

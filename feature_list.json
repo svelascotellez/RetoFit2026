@@ -25,5 +25,14 @@
         "status":  "done",
         "approval_hash":  "BB9F68A2536FB0400740791F7D7623EF3675B53EC3FFBAABD6B4E58A18B79B88",
         "approved_at":  "2026-10-23T23:01:27Z"
+    },
+    {
+        "id":  "FEAT-004",
+        "name":  "Edicion y Gestion de Registros de Reto Fit",
+        "description":  "Funcionalidad para editar nombres de participantes, eliminar participantes (con borrado en cascada), anular/eliminar abonos erróneos y restablecer/eliminar actividades físicas diarias, manteniendo la integridad contable y la persistencia en SQLite.",
+        "feature_dir":  "004-edicion-gestion-registros",
+        "status":  "done",
+        "approval_hash":  "098759A53537E855138E9CD3565360DED2687C8F94EF814E983BF4690B1E6741",
+        "approved_at":  "2026-10-24T20:24:38Z"
     }
 ]

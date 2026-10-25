@@ -116,6 +116,48 @@ class ChallengeService:
             )
         return activity.is_successful()
 
+    def update_participant_name(self, participant_id: str, new_name: str) -> Participant:
+        """Actualiza el nombre de un participante registrado."""
+        if participant_id not in self.participants:
+            raise KeyError(f"Participante {participant_id} no encontrado")
+        participant = self.participants[participant_id]
+        participant.update_name(new_name)
+        if self.repository is not None:
+            self.repository.update_participant_name(participant_id, participant.name)
+        return participant
+
+    def delete_participant(self, participant_id: str) -> bool:
+        """Elimina un participante y sus registros asociados."""
+        if participant_id not in self.participants:
+            raise KeyError(f"Participante {participant_id} no encontrado")
+        del self.participants[participant_id]
+        self.accumulated_earnings.pop(participant_id, None)
+        self.participant_met_weeks.pop(participant_id, None)
+        self.participant_missed_weeks.pop(participant_id, None)
+        if self.repository is not None:
+            self.repository.delete_participant(participant_id)
+        return True
+
+    def delete_last_payment(self, participant_id: str) -> float:
+        """Elimina el abono mas reciente de un participante y retorna el monto."""
+        if participant_id not in self.participants:
+            raise KeyError(f"Participante {participant_id} no encontrado")
+        participant = self.participants[participant_id]
+        removed = participant.remove_last_contribution()
+        if self.repository is not None:
+            self.repository.delete_last_payment(participant_id)
+        return removed
+
+    def delete_daily_activity(self, participant_id: str, week_number: int, day_of_week: int) -> bool:
+        """Elimina la actividad registrada para un dia y semana especificos."""
+        if participant_id not in self.participants:
+            raise KeyError(f"Participante {participant_id} no encontrado")
+        participant = self.participants[participant_id]
+        removed = participant.remove_activity(week_number, day_of_week)
+        if self.repository is not None:
+            self.repository.delete_activity(participant_id, week_number, day_of_week)
+        return removed
+
     def close_and_liquidate_week(self, week_number: int) -> WeeklyCloseResultDTO:
         """Evalua el cumplimiento semanal de todos los participantes,
         cobra penalizaciones de $100 a los incumplidores y distribuye la bolsa

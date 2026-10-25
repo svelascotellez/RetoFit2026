@@ -30,7 +30,12 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 <td class="text-success">+${p.total_earnings:.2f}</td>
                 <td class="{net_class}"><strong>${p.net_balance:.2f}</strong></td>
                 <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="quickPay('{p.participant_id}', 200)">+ $200 Quincena</button>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="quickPay('{p.participant_id}', 200)" title="Abonar $200 quincenales">+ $200</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="undoPayment('{p.participant_id}')" title="Anular último abono">↩️ Anular</button>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="editParticipant('{p.participant_id}', '{p.name}')" title="Editar nombre">✏️ Editar</button>
+                        <button class="btn" style="padding: 4px 8px; font-size: 0.8rem; background: var(--error); color: white;" onclick="confirmDeleteParticipant('{p.participant_id}', '{p.name}')" title="Eliminar participante">🗑️</button>
+                    </div>
                 </td>
             </tr>
             """
@@ -46,7 +51,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
                         <th scope="col">Penalizaciones</th>
                         <th scope="col">Ganancias Bolsa</th>
                         <th scope="col">Balance Neto Final</th>
-                        <th scope="col">Abonar Quincena</th>
+                        <th scope="col">Gestión y Abonos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -466,8 +471,9 @@ def render_dashboard_html(service: ChallengeService) -> str:
                             <label for="act-steps" class="form-label">Pasos</label>
                             <input id="act-steps" type="number" min="0" class="form-input" placeholder="≥ 10,000" value="5000">
                         </div>
-                        <div class="form-group" style="min-width: 120px;">
-                            <button type="submit" class="btn" style="width: 100%; height: 42px;">Guardar Día</button>
+                        <div class="form-group" style="min-width: 140px; display: flex; gap: 6px;">
+                            <button type="submit" class="btn" style="flex: 1; height: 42px;">Guardar</button>
+                            <button type="button" class="btn btn-secondary" style="height: 42px;" onclick="clearDailyActivity()" title="Restablecer o limpiar el día">Limpiar</button>
                         </div>
                     </div>
                 </form>
@@ -496,7 +502,123 @@ def render_dashboard_html(service: ChallengeService) -> str:
         </section>
     </div>
 
+    <!-- Modal Accesible de Confirmacion -->
+    <div id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; max-width:440px; width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+            <h3 id="confirmModalTitle" style="color:var(--error); margin-bottom:12px; font-size:1.2rem;">⚠️ Confirmar Eliminación</h3>
+            <p id="confirmModalMessage" style="color:var(--text-secondary); margin-bottom:20px; font-size:0.95rem; line-height:1.5;"></p>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button id="cancelModalBtn" type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Cancelar</button>
+                <button id="confirmModalBtn" type="button" class="btn" style="background:var(--error); color:#fff;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Accesible de Notificaciones -->
+    <div id="statusToast" role="status" aria-live="polite" style="display:none; position:fixed; bottom:20px; right:20px; background:var(--surface); border:1px solid var(--primary); padding:12px 20px; border-radius:8px; z-index:9998; color:var(--text-primary); box-shadow:0 4px 12px rgba(0,0,0,0.4);"></div>
+
     <script>
+        let pendingAction = null;
+
+        function showToast(message, isError = false) {{
+            const toast = document.getElementById('statusToast');
+            toast.textContent = message;
+            toast.style.borderColor = isError ? 'var(--error)' : 'var(--primary)';
+            toast.style.display = 'block';
+            setTimeout(() => {{ toast.style.display = 'none'; }}, 3500);
+        }}
+
+        function openConfirmModal(message, onConfirm) {{
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmModalMessage').textContent = message;
+            pendingAction = onConfirm;
+            modal.style.display = 'flex';
+            document.getElementById('confirmModalBtn').onclick = async () => {{
+                if (pendingAction) await pendingAction();
+                closeConfirmModal();
+            }};
+        }}
+
+        function closeConfirmModal() {{
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingAction = null;
+        }}
+
+        async function editParticipant(pid, currentName) {{
+            const newName = prompt('Ingresa el nuevo nombre para el participante (' + pid + '):', currentName);
+            if (newName === null) return;
+            if (!newName.trim()) {{
+                alert('El nombre no puede estar vacío.');
+                return;
+            }}
+            const res = await fetch('/api/participants/' + encodeURIComponent(pid), {{
+                method: 'PUT',
+                headers: {{ 'Content-Type': 'application/json' }},
+                body: JSON.stringify({{ name: newName.trim() }})
+            }});
+            if (res.ok) {{
+                showToast('Nombre actualizado correctamente.');
+                setTimeout(() => window.location.reload(), 600);
+            }} else {{
+                const err = await res.json();
+                alert(err.detail || 'Error al actualizar nombre');
+            }}
+        }}
+
+        function confirmDeleteParticipant(pid, name) {{
+            openConfirmModal(
+                '¿Estás seguro de que deseas eliminar permanentemente a ' + name + ' (' + pid + ')? Se eliminarán también en cascada todos sus abonos y actividades.',
+                async () => {{
+                    const res = await fetch('/api/participants/' + encodeURIComponent(pid), {{
+                        method: 'DELETE'
+                    }});
+                    if (res.ok) {{
+                        showToast('Participante eliminado exitosamente.');
+                        setTimeout(() => window.location.reload(), 600);
+                    }} else {{
+                        const err = await res.json();
+                        alert(err.detail || 'Error al eliminar participante');
+                    }}
+                }}
+            );
+        }}
+
+        async function undoPayment(pid) {{
+            if (!confirm('¿Deseas anular la última aportación quincenal de ' + pid + '?')) return;
+            const res = await fetch('/api/participants/' + encodeURIComponent(pid) + '/payments/last', {{
+                method: 'DELETE'
+            }});
+            if (res.ok) {{
+                const data = await res.json();
+                alert('Abono anulado. Total acumulado actual: $' + data.total_contributed.toFixed(2));
+                window.location.reload();
+            }} else {{
+                const err = await res.json();
+                alert(err.detail || 'Error al anular abono');
+            }}
+        }}
+
+        async function clearDailyActivity() {{
+            const pid = document.getElementById('act-pid').value.trim();
+            const weekStr = document.getElementById('act-week').value.trim();
+            const dayStr = document.getElementById('act-day').value.trim();
+            if (!pid || !weekStr || !dayStr) {{
+                alert('Para limpiar un día, por favor ingresa el ID del miembro, la semana y el día.');
+                return;
+            }}
+            if (!confirm('¿Limpiar y restablecer la actividad física del día ' + dayStr + ' en la semana ' + weekStr + ' para ' + pid + '?')) return;
+            const res = await fetch('/api/activities/' + encodeURIComponent(pid) + '/weeks/' + encodeURIComponent(weekStr) + '/days/' + encodeURIComponent(dayStr), {{
+                method: 'DELETE'
+            }});
+            if (res.ok) {{
+                alert('Actividad eliminada y día restablecido.');
+                window.location.reload();
+            }} else {{
+                const err = await res.json();
+                alert(err.detail || 'Error al limpiar actividad');
+            }}
+        }}
+
         async function registerParticipant() {{
             const id = document.getElementById('new-id').value.trim();
             const name = document.getElementById('new-name').value.trim();
@@ -556,7 +678,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 body: JSON.stringify({{
                     participant_id: pid,
                     week_number: parseInt(weekStr),
-                    day_number: parseInt(dayStr),
+                    day_of_week: parseInt(dayStr),
                     calories: parseInt(calStr || "0"),
                     steps: parseInt(stepsStr || "0")
                 }})
@@ -580,7 +702,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
             }});
             if (res.ok) {{
                 const data = await res.json();
-                alert("¡Semana " + data.week_number + " liquidada! Cumplidores: " + data.compliant_participants.length + " | Incumplidores: " + data.non_compliant_participants.length + " | Bolsa: $" + data.pool_collected + " | Ganancia por persona: $" + data.payout_per_compliant);
+                alert("¡Semana " + data.week_number + " liquidada! Cumplidores: " + data.met_count + " | Incumplidores: " + data.missed_count + " | Bolsa: $" + data.pool_collected + " | Ganancia por persona: $" + data.gain_per_participant);
                 window.location.reload();
             }} else {{
                 const err = await res.json();

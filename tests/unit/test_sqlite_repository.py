@@ -89,3 +89,62 @@ def test_rehydration_state_structure(temp_repo: SQLiteChallengeRepository) -> No
     assert state["participants"][0].id == "p40"
     assert state["participants"][0].total_contributed == 200.0
     assert state["rollover"] == 50.0
+
+
+def test_update_participant_name_persistence(temp_repo: SQLiteChallengeRepository) -> None:
+    """AC-4.1: Actualiza el nombre en SQLite."""
+    p = Participant(id="p50", name="Original")
+    temp_repo.save_participant(p)
+
+    temp_repo.update_participant_name("p50", "Actualizado")
+    retrieved = temp_repo.get_participant("p50")
+    assert retrieved is not None
+    assert retrieved.name == "Actualizado"
+
+
+def test_delete_participant_cascade_persistence(temp_repo: SQLiteChallengeRepository) -> None:
+    """AC-4.3: Elimina participante y sus pagos/actividades en cascada."""
+    p = Participant(id="p60", name="Para Borrar")
+    temp_repo.save_participant(p)
+    temp_repo.record_payment("p60", 200.0)
+    temp_repo.record_activity("p60", 1, 1, DailyActivity(calories=350, steps=10000))
+
+    deleted = temp_repo.delete_participant("p60")
+    assert deleted is True
+    assert temp_repo.get_participant("p60") is None
+
+    # Verificar que en SQLite no queden pagos ni actividades de p60
+    with temp_repo._get_connection() as conn:
+        pay_count = conn.execute("SELECT count(*) as c FROM payments WHERE participant_id = 'p60';").fetchone()["c"]
+        act_count = conn.execute("SELECT count(*) as c FROM activities WHERE participant_id = 'p60';").fetchone()["c"]
+        assert pay_count == 0
+        assert act_count == 0
+
+
+def test_delete_last_payment_persistence(temp_repo: SQLiteChallengeRepository) -> None:
+    """AC-4.4: Elimina el ultimo abono quincenal."""
+    p = Participant(id="p70", name="Pagos Test")
+    temp_repo.save_participant(p)
+    temp_repo.record_payment("p70", 200.0)
+    temp_repo.record_payment("p70", 200.0)
+
+    removed = temp_repo.delete_last_payment("p70")
+    assert removed == 200.0
+
+    retrieved = temp_repo.get_participant("p70")
+    assert retrieved is not None
+    assert retrieved.total_contributed == 200.0
+
+
+def test_delete_activity_persistence(temp_repo: SQLiteChallengeRepository) -> None:
+    """AC-4.5: Elimina el registro de actividad de un dia especifico."""
+    p = Participant(id="p80", name="Actividad Test")
+    temp_repo.save_participant(p)
+    temp_repo.record_activity("p80", 1, 2, DailyActivity(calories=400, steps=12000))
+
+    deleted = temp_repo.delete_activity("p80", 1, 2)
+    assert deleted is True
+
+    state = temp_repo.load_all_state()
+    assert "p80" not in state["activities"] or len(state["activities"]["p80"]) == 0
+

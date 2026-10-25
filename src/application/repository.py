@@ -59,3 +59,20 @@ class ChallengeRepository(Protocol):
     def load_all_state(self) -> Dict[str, Any]:
         """Carga todo el estado estructurado para rehidratar el servicio."""
         ...
+
+    def update_participant_name(self, participant_id: str, new_name: str) -> None:
+        """Actualiza el nombre de un participante registrado."""
+        ...
+
+    def delete_participant(self, participant_id: str) -> bool:
+        """Elimina un participante y sus registros asociados."""
+        ...
+
+    def delete_last_payment(self, participant_id: str) -> Optional[float]:
+        """Elimina el abono mas reciente de un participante y retorna el monto."""
+        ...
+
+    def delete_activity(self, participant_id: str, week_number: int, day_of_week: int) -> bool:
+        """Elimina el registro de actividad de un dia especifico."""
+        ...
+

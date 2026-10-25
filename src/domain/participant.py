@@ -38,7 +38,29 @@ class Participant:
             self.activities[week_number] = {}
         self.activities[week_number][day_of_week] = activity
 
+    def update_name(self, new_name: str) -> None:
+        """Actualiza el nombre del participante validando que no sea vacio."""
+        if not new_name or not new_name.strip():
+            raise ValueError("El nombre no puede estar vacio")
+        self.name = new_name.strip()
+
+    def remove_last_contribution(self) -> float:
+        """Elimina la ultima aportacion registrada del participante y devuelve el monto eliminado."""
+        if not self.contributions:
+            raise ValueError("El participante no tiene aportaciones registradas")
+        return self.contributions.pop()
+
+    def remove_activity(self, week_number: int, day_of_week: int) -> bool:
+        """Elimina la actividad registrada para un dia y semana especificos. Retorna True si existia."""
+        if day_of_week < 1 or day_of_week > 7:
+            raise ValueError("El dia de la semana debe ser entre 1 y 7")
+        if week_number in self.activities and day_of_week in self.activities[week_number]:
+            del self.activities[week_number][day_of_week]
+            return True
+        return False
+
     def get_successful_days(self, week_number: int) -> int:
         """Calcula el total de dias exitosos acumulados en una semana especifica."""
         week_data = self.activities.get(week_number, {})
         return sum(1 for act in week_data.values() if act.is_successful())
+
