@@ -61,5 +61,14 @@
         "status":  "done",
         "approval_hash":  "971E989719A2BF65AEEEFA7894C425ACD2CDE451CB358016AFB5F6DDD6E692DE",
         "approved_at":  "2026-10-26T14:50:46Z"
+    },
+    {
+        "id":  "FEAT-008",
+        "name":  "Navegacion Modular por Pestañas del Dashboard Web",
+        "description":  "Reorganización de la arquitectura de interfaz web del Dashboard Reto Fit mediante pestañas superiores accesibles: Panel General (operación y formularios), Concentrado Físico y Financiero, Informe Semanal de Cuotas y Cumplimiento, y Estadísticas Integrales del Reto.",
+        "feature_dir":  "008-navegacion-pestanas-concentrado-informe",
+        "status":  "done",
+        "approval_hash":  "CD50A741C2972B8F3A7AD1BEE457C1D8087088B8FF1802739FB68AAC009C6D22",
+        "approved_at":  "2026-10-26T15:10:37Z"
     }
 ]

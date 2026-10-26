@@ -688,13 +688,19 @@ def render_dashboard_html(service: ChallengeService) -> str:
             </div>
         </header>
 
-        <!-- Barra de Navegación por Pestañas Accesible (AC-7.5) -->
+        <!-- Barra de Navegación por Pestañas Accesible (AC-8.1) -->
         <nav class="tabs-header" role="tablist" aria-label="Navegación del Reto Fit">
             <button id="tab-general" class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-general" tabindex="0" onclick="switchTab('general')">
                 <span>📋</span> Panel General
             </button>
+            <button id="tab-concentrado" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-concentrado" tabindex="-1" onclick="switchTab('concentrado')">
+                <span>👥</span> Concentrado Físico y Financiero
+            </button>
+            <button id="tab-informe" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-informe" tabindex="-1" onclick="switchTab('informe')">
+                <span>📊</span> Informe Semanal de Cuotas y Cumplimiento
+            </button>
             <button id="tab-stats" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-stats" tabindex="-1" onclick="switchTab('stats')">
-                <span>📊</span> Estadísticas del Reto
+                <span>📈</span> Estadísticas del Reto
             </button>
         </nav>
 
@@ -819,47 +825,60 @@ def render_dashboard_html(service: ChallengeService) -> str:
                     </div>
                 </form>
             </div>
-
-            <!-- Seccion de Informe Semanal de Cuotas y Cumplimiento -->
-            <div class="card col-12" id="weekly-report-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-                    <div>
-                        <h2 style="font-size: 1.35rem; margin-bottom: 4px;">📊 Informe Semanal de Cuotas y Cumplimiento</h2>
-                        <p class="text-muted" style="font-size: 0.85rem;">Auditoría de cuotas exigibles del calendario ($200 quincenales, $100 final) y cumplimiento físico semanal.</p>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                        {status_closed_badge}
-                        <label for="weekly-report-select" class="form-label" style="margin: 0; font-weight: 600;">Semana:</label>
-                        <select id="weekly-report-select" class="form-input" style="width: auto; padding: 6px 14px; font-weight: 600; cursor: pointer;" onchange="loadWeeklyReport(this.value)">
-                            <option value="1" selected>Semana 1 (19-25 oct)</option>
-                            <option value="2">Semana 2 (26 oct - 1 nov)</option>
-                            <option value="3">Semana 3 (2-8 nov)</option>
-                            <option value="4">Semana 4 (9-15 nov)</option>
-                            <option value="5">Semana 5 (16-22 nov)</option>
-                            <option value="6">Semana 6 (23-29 nov)</option>
-                            <option value="7">Semana 7 (30 nov - 6 dic)</option>
-                            <option value="8">Semana 8 (7-13 dic)</option>
-                            <option value="9">Semana 9 Final (14-20 dic)</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="weekly-report-loading" style="display: none; padding: 24px; text-align: center; color: var(--neon-accent);" role="status" aria-live="polite">
-                    ⏳ Cargando métricas e informe de la semana...
-                </div>
-                <div id="weekly-report-container">
-                    {weekly_report_content}
-                </div>
-            </div>
-
-            <!-- Tabla General de Concentrado -->
-            <div class="card col-12">
-                <h2 style="font-size: 1.35rem; margin-bottom: 8px;">Concentrado Físico y Financiero</h2>
-                {table_content}
-            </div>
         </section>
         </div>
 
-        <!-- Panel de Estadísticas del Reto (AC-7.5, AC-7.6) -->
+        <!-- Panel 2: Concentrado Físico y Financiero (AC-8.2) -->
+        <div id="panel-concentrado" class="tab-panel hidden" role="tabpanel" aria-labelledby="tab-concentrado" tabindex="0" style="display: none;">
+            <section class="bento-grid">
+                <div class="card col-12">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h2 style="font-size: 1.35rem; margin-bottom: 4px;">👥 Concentrado Físico y Financiero</h2>
+                            <p class="text-muted" style="font-size: 0.85rem;">Monitoreo integral de aportaciones quincenales, semanas cumplidas, penalizaciones y balance neto por miembro.</p>
+                        </div>
+                    </div>
+                    {table_content}
+                </div>
+            </section>
+        </div>
+
+        <!-- Panel 3: Informe Semanal de Cuotas y Cumplimiento (AC-8.3) -->
+        <div id="panel-informe" class="tab-panel hidden" role="tabpanel" aria-labelledby="tab-informe" tabindex="0" style="display: none;">
+            <section class="bento-grid">
+                <div class="card col-12" id="weekly-report-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                        <div>
+                            <h2 style="font-size: 1.35rem; margin-bottom: 4px;">📊 Informe Semanal de Cuotas y Cumplimiento</h2>
+                            <p class="text-muted" style="font-size: 0.85rem;">Auditoría de cuotas exigibles del calendario ($200 quincenales, $100 final) y cumplimiento físico semanal.</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            {status_closed_badge}
+                            <label for="weekly-report-select" class="form-label" style="margin: 0; font-weight: 600;">Semana:</label>
+                            <select id="weekly-report-select" class="form-input" style="width: auto; padding: 6px 14px; font-weight: 600; cursor: pointer;" onchange="loadWeeklyReport(this.value)">
+                                <option value="1" selected>Semana 1 (19-25 oct)</option>
+                                <option value="2">Semana 2 (26 oct - 1 nov)</option>
+                                <option value="3">Semana 3 (2-8 nov)</option>
+                                <option value="4">Semana 4 (9-15 nov)</option>
+                                <option value="5">Semana 5 (16-22 nov)</option>
+                                <option value="6">Semana 6 (23-29 nov)</option>
+                                <option value="7">Semana 7 (30 nov - 6 dic)</option>
+                                <option value="8">Semana 8 (7-13 dic)</option>
+                                <option value="9">Semana 9 Final (14-20 dic)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="weekly-report-loading" style="display: none; padding: 24px; text-align: center; color: var(--neon-accent);" role="status" aria-live="polite">
+                        ⏳ Cargando métricas e informe de la semana...
+                    </div>
+                    <div id="weekly-report-container">
+                        {weekly_report_content}
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Panel 4: Estadísticas del Reto (AC-7.5, AC-7.6) -->
         <div id="panel-stats" class="tab-panel hidden" role="tabpanel" aria-labelledby="tab-stats" tabindex="0" style="display: none;">
             {stats_tab_content}
         </div>
@@ -1143,59 +1162,42 @@ def render_dashboard_html(service: ChallengeService) -> str:
             }}
         }}
 
-        function switchTab(tabId) {{
-            const tabGeneral = document.getElementById('tab-general');
-            const tabStats = document.getElementById('tab-stats');
-            const panelGeneral = document.getElementById('panel-general');
-            const panelStats = document.getElementById('panel-stats');
+        const tabIds = ['general', 'concentrado', 'informe', 'stats'];
 
-            if (tabId === 'stats') {{
-                if (tabGeneral) {{
-                    tabGeneral.classList.remove('active');
-                    tabGeneral.setAttribute('aria-selected', 'false');
-                    tabGeneral.setAttribute('tabindex', '-1');
+        function switchTab(tabId) {{
+            tabIds.forEach(id => {{
+                const tab = document.getElementById('tab-' + id);
+                const panel = document.getElementById('panel-' + id);
+                const isActive = (id === tabId);
+
+                if (tab) {{
+                    if (isActive) {{
+                        tab.classList.add('active');
+                        tab.setAttribute('aria-selected', 'true');
+                        tab.setAttribute('tabindex', '0');
+                    }} else {{
+                        tab.classList.remove('active');
+                        tab.setAttribute('aria-selected', 'false');
+                        tab.setAttribute('tabindex', '-1');
+                    }}
                 }}
-                if (tabStats) {{
-                    tabStats.classList.add('active');
-                    tabStats.setAttribute('aria-selected', 'true');
-                    tabStats.setAttribute('tabindex', '0');
+
+                if (panel) {{
+                    if (isActive) {{
+                        panel.classList.remove('hidden');
+                        panel.style.display = 'block';
+                        panel.focus();
+                    }} else {{
+                        panel.classList.add('hidden');
+                        panel.style.display = 'none';
+                    }}
                 }}
-                if (panelGeneral) {{
-                    panelGeneral.classList.add('hidden');
-                    panelGeneral.style.display = 'none';
-                }}
-                if (panelStats) {{
-                    panelStats.classList.remove('hidden');
-                    panelStats.style.display = 'block';
-                    panelStats.focus();
-                }}
-            }} else {{
-                if (tabStats) {{
-                    tabStats.classList.remove('active');
-                    tabStats.setAttribute('aria-selected', 'false');
-                    tabStats.setAttribute('tabindex', '-1');
-                }}
-                if (tabGeneral) {{
-                    tabGeneral.classList.add('active');
-                    tabGeneral.setAttribute('aria-selected', 'true');
-                    tabGeneral.setAttribute('tabindex', '0');
-                }}
-                if (panelStats) {{
-                    panelStats.classList.add('hidden');
-                    panelStats.style.display = 'none';
-                }}
-                if (panelGeneral) {{
-                    panelGeneral.classList.remove('hidden');
-                    panelGeneral.style.display = 'block';
-                    panelGeneral.focus();
-                }}
-            }}
+            }});
         }}
 
         document.addEventListener('DOMContentLoaded', () => {{
-            const tabs = [document.getElementById('tab-general'), document.getElementById('tab-stats')];
+            const tabs = tabIds.map(id => document.getElementById('tab-' + id)).filter(Boolean);
             tabs.forEach((tab, index) => {{
-                if (!tab) return;
                 tab.addEventListener('keydown', (e) => {{
                     let nextIndex = null;
                     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {{
@@ -1210,7 +1212,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
                     if (nextIndex !== null) {{
                         e.preventDefault();
                         tabs[nextIndex].focus();
-                        const tabTarget = nextIndex === 0 ? 'general' : 'stats';
+                        const tabTarget = tabIds[nextIndex];
                         switchTab(tabTarget);
                     }}
                 }});
