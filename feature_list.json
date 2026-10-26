@@ -43,5 +43,23 @@
         "status":  "done",
         "approval_hash":  "5987D0031A0FFBD901F71ED242FFE81A1B42245C374816BB35C27FEF948596B5",
         "approved_at":  "2026-10-24T20:53:11Z"
+    },
+    {
+        "id":  "FEAT-006",
+        "name":  "Informe Semanal de Cuotas y Cumplimiento del Reto",
+        "description":  "Generación de informe semanal detallado y consolidado de cumplimiento físico (días exitosos, penalizaciones y bolsa) y estatus financiero de cuotas exigibles según el calendario oficial ($200 quincenales, $100 final), con endpoint REST y sección interactiva en Dashboard Web.",
+        "feature_dir":  "006-informe-semanal-cuotas-cumplimiento",
+        "status":  "done",
+        "approval_hash":  "2EBBC35A16DE4A996C5EEBEF9FC95AFCB8204B59C633897C989C05F4140ECB21",
+        "approved_at":  "2026-10-26T14:20:48Z"
+    },
+    {
+        "id":  "FEAT-007",
+        "name":  "Pestaña de Estadísticas Integrales del Reto Fit",
+        "description":  "Pestaña interactiva accesible (Tabs) en el Dashboard Web con analítica deportiva y contable: totales y promedios de pasos y calorías, ranking/podio de participantes por días exitosos, barras de cumplimiento semanal y endpoint REST /api/statistics.",
+        "feature_dir":  "007-pestana-estadisticas-retofit",
+        "status":  "done",
+        "approval_hash":  "971E989719A2BF65AEEEFA7894C425ACD2CDE451CB358016AFB5F6DDD6E692DE",
+        "approved_at":  "2026-10-26T14:50:46Z"
     }
 ]

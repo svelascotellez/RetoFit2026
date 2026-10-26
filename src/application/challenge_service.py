@@ -2,12 +2,13 @@
 Capa de Aplicacion: Servicio Orquestador del Reto Fit
 Criterios EARS: AC-1.1 a AC-1.8
 """
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, Any
 from src.domain.activity import DailyActivity
 from src.domain.challenge_week import ChallengeWeek
 from src.domain.challenge_pool import WeeklyPool
 from src.domain.participant import Participant
 from src.domain.financial_summary import FinancialSummary
+from src.domain.weekly_report import get_expected_contribution_for_week
 from src.application.dto import (
     RegisterParticipantDTO,
     RecordPaymentDTO,
@@ -15,7 +16,13 @@ from src.application.dto import (
     WeeklyCloseResultDTO,
     ParticipantSummaryDTO,
     GeneralSummaryDTO,
+    WeeklyParticipantReportDTO,
+    WeeklyReportDTO,
+    ParticipantRankingDTO,
+    WeeklyStatsTrendDTO,
+    GlobalStatsDTO,
 )
+from src.domain.challenge_stats import calculate_global_stats
 from src.application.repository import ChallengeRepository
 
 
@@ -29,6 +36,8 @@ class ChallengeService:
         self.participant_met_weeks: Dict[str, int] = {}
         self.participant_missed_weeks: Dict[str, int] = {}
         self.current_rollover: float = 0.0
+        self.closed_weeks: Set[int] = set()
+        self.closed_weeks_data: Dict[int, Dict[str, Any]] = {}
 
         if self.repository is not None:
             self._rehydrate()
@@ -60,6 +69,9 @@ class ChallengeService:
 
         # 3. Cierres semanales acumulados
         for close in state.get("weekly_closes", []):
+            wn = close["week_number"]
+            self.closed_weeks.add(wn)
+            self.closed_weeks_data[wn] = close
             payout = close["payout_per_compliant"]
             for cid in close["compliant_participants"]:
                 if cid in self.accumulated_earnings:
@@ -189,6 +201,15 @@ class ChallengeService:
         self.current_rollover = rollover
         self.weeks[week_number] = week
         self.pools[week_number] = pool
+        self.closed_weeks.add(week_number)
+        self.closed_weeks_data[week_number] = {
+            "week_number": week_number,
+            "compliant_participants": list(week.met_participants),
+            "non_compliant_participants": list(week.missed_participants),
+            "pool_collected": pool.current_total,
+            "rollover_amount": rollover,
+            "payout_per_compliant": gain_per_person,
+        }
 
         if self.repository is not None:
             self.repository.record_week_close(
@@ -247,4 +268,178 @@ class ChallengeService:
             total_penalties_distributed=total_penalties,
             total_rollover_balance=self.current_rollover,
             participants=part_summaries,
+        )
+
+    def get_weekly_report(self, week_number: int) -> WeeklyReportDTO:
+        """Genera el informe semanal de cuotas acumuladas y cumplimiento fisico."""
+        if week_number < 1 or week_number > 9:
+            raise ValueError("El numero de semana debe estar entre 1 y 9")
+
+        is_closed = week_number in self.weeks or week_number in self.closed_weeks
+        gain_per_compliant = 0.0
+        pool_amount = 0.0
+
+        if is_closed and week_number in self.pools:
+            pool = self.pools[week_number]
+            pool_amount = pool.current_total
+            met_count_closed = len(self.weeks[week_number].met_participants)
+            if met_count_closed > 0:
+                gain_per_compliant = round(pool_amount / met_count_closed, 2)
+        elif is_closed and week_number in self.closed_weeks_data:
+            cdata = self.closed_weeks_data[week_number]
+            pool_amount = float(cdata.get("pool_collected", 0.0))
+            gain_per_compliant = float(cdata.get("payout_per_compliant", 0.0))
+
+        expected_per_part = get_expected_contribution_for_week(week_number)
+        items: List[WeeklyParticipantReportDTO] = []
+        met_count = 0
+        missed_count = 0
+        up_to_date_count = 0
+        behind_count = 0
+
+        for p_id, p in self.participants.items():
+            days = p.get_successful_days(week_number)
+            is_met = days >= 4
+            if is_met:
+                met_count += 1
+            else:
+                missed_count += 1
+
+            if p.total_contributed >= expected_per_part:
+                up_to_date_count += 1
+                fin_status = "AL_CORRIENTE"
+                pending = 0.0
+            else:
+                behind_count += 1
+                fin_status = "PENDIENTE"
+                pending = round(expected_per_part - p.total_contributed, 2)
+
+            penalty = 0.0 if is_met else 100.0
+            earnings = gain_per_compliant if (is_closed and is_met) else 0.0
+            net_impact = round(earnings - penalty, 2)
+
+            items.append(
+                WeeklyParticipantReportDTO(
+                    participant_id=p.id,
+                    name=p.name,
+                    successful_days=days,
+                    is_met=is_met,
+                    total_contributed=p.total_contributed,
+                    expected_contribution=expected_per_part,
+                    financial_status=fin_status,
+                    pending_amount=pending,
+                    penalty=penalty,
+                    earnings=earnings,
+                    net_balance_impact=net_impact,
+                )
+            )
+
+        if not is_closed:
+            pool_amount = round((missed_count * 100.0) + self.current_rollover, 2)
+            gain_per_compliant = round(pool_amount / met_count, 2) if met_count > 0 else 0.0
+
+        total_parts = len(items)
+        rate = round((met_count / total_parts * 100), 1) if total_parts > 0 else 0.0
+        total_exp = round(expected_per_part * total_parts, 2)
+        total_col = round(sum(i.total_contributed for i in items), 2)
+
+        return WeeklyReportDTO(
+            week_number=week_number,
+            total_participants=total_parts,
+            met_count=met_count,
+            missed_count=missed_count,
+            compliance_rate=rate,
+            expected_contribution_per_participant=expected_per_part,
+            total_expected_funds=total_exp,
+            total_collected_funds=total_col,
+            participants_up_to_date=up_to_date_count,
+            participants_behind=behind_count,
+            is_closed=is_closed,
+            pool_amount=pool_amount,
+            gain_per_compliant=gain_per_compliant,
+            participants=items,
+        )
+
+    def get_global_statistics(self) -> GlobalStatsDTO:
+        """Genera las estadisticas globales, ranking de participantes y tendencias del reto."""
+        participants_data = []
+        for p in self.participants.values():
+            activities_list = []
+            for week_acts in p.activities.values():
+                for act in week_acts.values():
+                    activities_list.append({
+                        "calories": act.calories,
+                        "steps": act.steps,
+                        "is_successful": act.is_successful(),
+                    })
+            participants_data.append({
+                "participant_id": p.id,
+                "name": p.name,
+                "activities": activities_list,
+            })
+
+        total_parts = len(self.participants)
+        weekly_raw_data = {}
+        for w in range(1, 10):
+            w_succ = sum(p.get_successful_days(w) for p in self.participants.values())
+            w_compliant = sum(1 for p in self.participants.values() if p.get_successful_days(w) >= 4)
+            w_missed = total_parts - w_compliant
+            if w in self.closed_weeks_data:
+                w_pool = float(self.closed_weeks_data[w].get("pool_collected", 0.0))
+            elif w in self.pools:
+                w_pool = float(self.pools[w].current_total)
+            else:
+                w_pool = float(w_missed * 100.0) if total_parts > 0 else 0.0
+            weekly_raw_data[w] = {
+                "successful_days": w_succ,
+                "compliant": w_compliant,
+                "total": total_parts,
+                "pool": w_pool,
+            }
+
+        gen_summary = self.get_general_summary()
+        total_penalties = gen_summary.total_penalties_distributed
+        total_distributed_pool = sum(self.accumulated_earnings.values())
+
+        domain_stats = calculate_global_stats(
+            participants_data=participants_data,
+            total_penalties=total_penalties,
+            total_distributed_pool=total_distributed_pool,
+            weekly_raw_data=weekly_raw_data,
+            total_participants_count=total_parts,
+        )
+
+        return GlobalStatsDTO(
+            total_calories=domain_stats.total_calories,
+            total_steps=domain_stats.total_steps,
+            total_successful_days=domain_stats.total_successful_days,
+            total_activity_days=domain_stats.total_activity_days,
+            average_daily_calories=domain_stats.average_daily_calories,
+            average_daily_steps=domain_stats.average_daily_steps,
+            total_participants=domain_stats.total_participants,
+            total_penalties=domain_stats.total_penalties,
+            total_distributed_pool=domain_stats.total_distributed_pool,
+            ranking=[
+                ParticipantRankingDTO(
+                    rank_position=r.rank_position,
+                    participant_id=r.participant_id,
+                    name=r.name,
+                    successful_days=r.successful_days,
+                    total_calories=r.total_calories,
+                    total_steps=r.total_steps,
+                    is_podium=r.is_podium,
+                )
+                for r in domain_stats.ranking
+            ],
+            weekly_trends=[
+                WeeklyStatsTrendDTO(
+                    week_number=t.week_number,
+                    successful_days=t.successful_days,
+                    compliant_participants=t.compliant_participants,
+                    total_participants=t.total_participants,
+                    compliance_rate=t.compliance_rate,
+                    pool_amount=t.pool_amount,
+                )
+                for t in domain_stats.weekly_trends
+            ],
         )

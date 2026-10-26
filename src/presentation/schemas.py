@@ -75,3 +75,67 @@ class SummaryResponseSchema(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     status: str = "healthy"
+
+
+class WeeklyParticipantReportItem(BaseModel):
+    participant_id: str
+    name: str
+    successful_days: int
+    is_met: bool
+    total_contributed: float
+    expected_contribution: float
+    financial_status: str
+    pending_amount: float
+    penalty: float
+    earnings: float
+    net_balance_impact: float
+
+
+class WeeklyReportResponseSchema(BaseModel):
+    week_number: int
+    total_participants: int
+    met_count: int
+    missed_count: int
+    compliance_rate: float
+    expected_contribution_per_participant: float
+    total_expected_funds: float
+    total_collected_funds: float
+    participants_up_to_date: int
+    participants_behind: int
+    is_closed: bool
+    pool_amount: float
+    gain_per_compliant: float
+    participants: List[WeeklyParticipantReportItem]
+
+
+class ParticipantRankingSchema(BaseModel):
+    rank_position: int
+    participant_id: str
+    name: str
+    successful_days: int
+    total_calories: float
+    total_steps: int
+    is_podium: bool
+
+
+class WeeklyStatsTrendSchema(BaseModel):
+    week_number: int
+    successful_days: int
+    compliant_participants: int
+    total_participants: int
+    compliance_rate: float
+    pool_amount: float
+
+
+class GlobalStatsResponseSchema(BaseModel):
+    total_calories: float
+    total_steps: int
+    total_successful_days: int
+    total_activity_days: int
+    average_daily_calories: float
+    average_daily_steps: float
+    total_participants: int
+    total_penalties: float
+    total_distributed_pool: float
+    ranking: List[ParticipantRankingSchema]
+    weekly_trends: List[WeeklyStatsTrendSchema]

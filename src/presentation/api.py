@@ -22,6 +22,11 @@ from src.presentation.schemas import (
     SummaryResponseSchema,
     ParticipantSummaryItem,
     HealthCheckResponse,
+    WeeklyReportResponseSchema,
+    WeeklyParticipantReportItem,
+    GlobalStatsResponseSchema,
+    ParticipantRankingSchema,
+    WeeklyStatsTrendSchema,
 )
 
 router = APIRouter()
@@ -66,6 +71,102 @@ def get_summary(service: ChallengeService = Depends(get_challenge_service)) -> S
                 net_balance=p.net_balance,
             )
             for p in general.participants
+        ],
+    )
+
+
+@router.get(
+    "/api/reports/weekly/{week_number}",
+    response_model=WeeklyReportResponseSchema,
+    summary="Informe semanal de cuotas y cumplimiento del reto",
+)
+def get_weekly_report(
+    week_number: int,
+    service: ChallengeService = Depends(get_challenge_service),
+) -> WeeklyReportResponseSchema:
+    """Retorna el informe detallado de cuotas acumuladas y cumplimiento fisico para una semana (1 a 9)."""
+    if week_number < 1 or week_number > 9:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El numero de semana debe estar entre 1 y 9",
+        )
+    try:
+        report = service.get_weekly_report(week_number)
+        return WeeklyReportResponseSchema(
+            week_number=report.week_number,
+            total_participants=report.total_participants,
+            met_count=report.met_count,
+            missed_count=report.missed_count,
+            compliance_rate=report.compliance_rate,
+            expected_contribution_per_participant=report.expected_contribution_per_participant,
+            total_expected_funds=report.total_expected_funds,
+            total_collected_funds=report.total_collected_funds,
+            participants_up_to_date=report.participants_up_to_date,
+            participants_behind=report.participants_behind,
+            is_closed=report.is_closed,
+            pool_amount=report.pool_amount,
+            gain_per_compliant=report.gain_per_compliant,
+            participants=[
+                WeeklyParticipantReportItem(
+                    participant_id=p.participant_id,
+                    name=p.name,
+                    successful_days=p.successful_days,
+                    is_met=p.is_met,
+                    total_contributed=p.total_contributed,
+                    expected_contribution=p.expected_contribution,
+                    financial_status=p.financial_status,
+                    pending_amount=p.pending_amount,
+                    penalty=p.penalty,
+                    earnings=p.earnings,
+                    net_balance_impact=p.net_balance_impact,
+                )
+                for p in report.participants
+            ],
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get(
+    "/api/statistics",
+    response_model=GlobalStatsResponseSchema,
+    summary="Estadisticas integrales, ranking y tendencias del reto",
+)
+def get_statistics(service: ChallengeService = Depends(get_challenge_service)) -> GlobalStatsResponseSchema:
+    """Retorna las metricas acumuladas globales, ranking de participantes y tendencias semanales."""
+    stats = service.get_global_statistics()
+    return GlobalStatsResponseSchema(
+        total_calories=stats.total_calories,
+        total_steps=stats.total_steps,
+        total_successful_days=stats.total_successful_days,
+        total_activity_days=stats.total_activity_days,
+        average_daily_calories=stats.average_daily_calories,
+        average_daily_steps=stats.average_daily_steps,
+        total_participants=stats.total_participants,
+        total_penalties=stats.total_penalties,
+        total_distributed_pool=stats.total_distributed_pool,
+        ranking=[
+            ParticipantRankingSchema(
+                rank_position=r.rank_position,
+                participant_id=r.participant_id,
+                name=r.name,
+                successful_days=r.successful_days,
+                total_calories=r.total_calories,
+                total_steps=r.total_steps,
+                is_podium=r.is_podium,
+            )
+            for r in stats.ranking
+        ],
+        weekly_trends=[
+            WeeklyStatsTrendSchema(
+                week_number=t.week_number,
+                successful_days=t.successful_days,
+                compliant_participants=t.compliant_participants,
+                total_participants=t.total_participants,
+                compliance_rate=t.compliance_rate,
+                pool_amount=t.pool_amount,
+            )
+            for t in stats.weekly_trends
         ],
     )
 

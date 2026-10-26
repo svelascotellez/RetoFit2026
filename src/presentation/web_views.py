@@ -70,6 +70,227 @@ def render_dashboard_html(service: ChallengeService) -> str:
         </div>
         """
 
+    # Construccion de la seccion de Informe Semanal (Semana 1 por defecto)
+    if has_participants:
+        report_w1 = service.get_weekly_report(1)
+        weekly_rows = ""
+        for wp in report_w1.participants:
+            compliance_badge = (
+                f'<span class="badge badge-success">{wp.successful_days}/7 días (Cumplió)</span>'
+                if wp.is_met
+                else f'<span class="badge badge-warning">{wp.successful_days}/7 días (Incumplió)</span>'
+            )
+            status_badge = (
+                '<span class="badge badge-success">Al corriente</span>'
+                if wp.financial_status == "AL_CORRIENTE"
+                else f'<span class="badge badge-warning">Pendiente: -${wp.pending_amount:.2f}</span>'
+            )
+            penalty_str = f"-${wp.penalty:.2f}" if wp.penalty > 0 else "$0.00"
+            penalty_class = "text-error" if wp.penalty > 0 else "text-muted"
+            earnings_str = f"+${wp.earnings:.2f}" if wp.earnings > 0 else "$0.00"
+            earnings_class = "text-success" if wp.earnings > 0 else "text-muted"
+            impact_class = "text-success" if wp.net_balance_impact >= 0 else "text-error"
+
+            weekly_rows += f"""
+            <tr>
+                <td><strong>{wp.name}</strong> <span class="text-muted">({wp.participant_id})</span></td>
+                <td>{compliance_badge}</td>
+                <td><strong>${wp.total_contributed:.2f}</strong> <span class="text-muted">/ ${wp.expected_contribution:.2f}</span></td>
+                <td>{status_badge}</td>
+                <td class="{penalty_class}">{penalty_str}</td>
+                <td class="{earnings_class}">{earnings_str}</td>
+                <td class="{impact_class}"><strong>${wp.net_balance_impact:+.2f}</strong></td>
+            </tr>
+            """
+
+        status_closed_badge = (
+            '<span class="badge badge-success" id="weekly-report-closed-badge">Semana Liquidada</span>'
+            if report_w1.is_closed
+            else '<span class="badge badge-warning" id="weekly-report-closed-badge">Semana en Curso / Preliminar</span>'
+        )
+
+        weekly_report_content = f"""
+        <div id="weekly-report-kpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+                <div class="metric-title">Tasa de Cumplimiento Físico</div>
+                <div class="metric-value primary" id="kpi-compliance-rate">{report_w1.compliance_rate:.1f}%</div>
+                <div class="text-muted" style="font-size: 0.85rem;" id="kpi-compliance-counts">{report_w1.met_count} cumplieron / {report_w1.missed_count} no cumplieron</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+                <div class="metric-title">Cuota Exigible Acumulada</div>
+                <div class="metric-value secondary" id="kpi-expected-quota">${report_w1.expected_contribution_per_participant:.2f}</div>
+                <div class="text-muted" style="font-size: 0.85rem;" id="kpi-quota-status">{report_w1.participants_up_to_date} al corriente / {report_w1.participants_behind} pendientes</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
+                <div class="metric-title">Bolsa Semanal (Penalizaciones)</div>
+                <div class="metric-value neon" id="kpi-pool-amount">${report_w1.pool_amount:.2f}</div>
+                <div class="text-muted" style="font-size: 0.85rem;" id="kpi-gain-per-compliant">+${report_w1.gain_per_compliant:.2f} por cumplidor</div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table" aria-label="Informe Semanal de Cuotas y Cumplimiento">
+                <thead>
+                    <tr>
+                        <th scope="col">Participante</th>
+                        <th scope="col">Cumplimiento Físico (≥4 días)</th>
+                        <th scope="col">Aportación Acumulada</th>
+                        <th scope="col">Estatus de Cuota</th>
+                        <th scope="col">Penalización</th>
+                        <th scope="col">Ganancia Bolsa</th>
+                        <th scope="col">Impacto Semanal</th>
+                    </tr>
+                </thead>
+                <tbody id="weekly-report-table-body">
+                    {weekly_rows}
+                </tbody>
+            </table>
+        </div>
+        """
+    else:
+        status_closed_badge = ""
+        weekly_report_content = """
+        <div id="weekly-report-empty" class="empty-state" role="status" aria-live="polite">
+            <div class="empty-icon" aria-hidden="true">📊</div>
+            <h3>Sin datos de informe semanal</h3>
+            <p>No hay participantes registrados para generar el informe de la semana seleccionada.</p>
+        </div>
+        """
+
+    # Construccion de la seccion de Estadisticas Integrales (FEAT-007)
+    stats = service.get_global_statistics()
+    has_activities = stats.total_activity_days > 0
+
+    if has_activities:
+        ranking_rows = ""
+        for r in stats.ranking:
+            if r.rank_position == 1:
+                podium_badge = '<span class="badge badge-gold">🥇 1° Lugar (Oro)</span>'
+            elif r.rank_position == 2:
+                podium_badge = '<span class="badge badge-silver">🥈 2° Lugar (Plata)</span>'
+            elif r.rank_position == 3:
+                podium_badge = '<span class="badge badge-bronze">🥉 3° Lugar (Bronce)</span>'
+            else:
+                podium_badge = f'<span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">{r.rank_position}°</span>'
+
+            ranking_rows += f"""
+            <tr>
+                <td style="font-family: var(--font-mono); font-weight: 700;">#{r.rank_position}</td>
+                <td><strong>{r.name}</strong> <span class="text-muted">({r.participant_id})</span></td>
+                <td><span class="badge badge-success">{r.successful_days} días</span></td>
+                <td style="font-family: var(--font-mono);">{r.total_calories:,.0f} kcal</td>
+                <td style="font-family: var(--font-mono);">{r.total_steps:,}</td>
+                <td>{podium_badge}</td>
+            </tr>
+            """
+
+        trend_rows = ""
+        for t in stats.weekly_trends:
+            trend_rows += f"""
+            <tr>
+                <td style="font-weight: 700;">Semana {t.week_number}</td>
+                <td><span class="badge badge-success">{t.successful_days} días</span></td>
+                <td>{t.compliant_participants} / {t.total_participants}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-family: var(--font-mono); font-weight: 600; min-width: 45px;">{t.compliance_rate:.1f}%</span>
+                        <div class="trend-bar-container" style="flex: 1;">
+                            <div class="trend-bar-fill" style="width: {min(100.0, max(0.0, t.compliance_rate))}%;"></div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-family: var(--font-mono); font-weight: 700;" class="text-success">${t.pool_amount:.2f}</td>
+            </tr>
+            """
+
+        stats_tab_content = f"""
+        <section class="bento-grid">
+            <div class="card col-3">
+                <div class="metric-title">🔥 Calorías Totales Quemadas</div>
+                <div class="metric-value neon">{stats.total_calories:,.0f} <span style="font-size: 1rem; color: var(--text-secondary);">kcal</span></div>
+                <p class="text-muted" style="margin-top: 8px;">Promedio diario: <strong class="text-primary">{stats.average_daily_calories:.1f} kcal/día</strong></p>
+            </div>
+
+            <div class="card col-3">
+                <div class="metric-title">👟 Pasos Totales Caminados</div>
+                <div class="metric-value primary">{stats.total_steps:,}</div>
+                <p class="text-muted" style="margin-top: 8px;">Promedio diario: <strong class="text-primary">{stats.average_daily_steps:,.0f} pasos/día</strong></p>
+            </div>
+
+            <div class="card col-3">
+                <div class="metric-title">⚡ Días Exitosos Registrados</div>
+                <div class="metric-value secondary">{stats.total_successful_days} <span style="font-size: 1rem; color: var(--text-secondary);">/ {stats.total_activity_days} registros</span></div>
+                <p class="text-muted" style="margin-top: 8px;">Efectividad colectiva: <strong class="text-success">{round((stats.total_successful_days / stats.total_activity_days * 100), 1) if stats.total_activity_days > 0 else 0.0}%</strong></p>
+            </div>
+
+            <div class="card col-3">
+                <div class="metric-title">💰 Balance de Penalizaciones</div>
+                <div class="metric-value text-error">-${stats.total_penalties:.2f}</div>
+                <p class="text-muted" style="margin-top: 8px;">Bolsa distribuida: <strong class="text-success">+${stats.total_distributed_pool:.2f}</strong></p>
+            </div>
+
+            <div class="card col-7">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h2 style="font-size: 1.35rem; margin-bottom: 4px;">🏆 Podio y Ranking de Rendimiento</h2>
+                        <p class="text-muted" style="font-size: 0.85rem;">Ordenado por días exitosos acumulados (criterio de desempate por calorías quemadas).</p>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" aria-label="Ranking de Participantes del Reto Fit">
+                        <thead>
+                            <tr>
+                                <th scope="col">Pos</th>
+                                <th scope="col">Participante</th>
+                                <th scope="col">Días Exitosos</th>
+                                <th scope="col">Calorías Totales</th>
+                                <th scope="col">Pasos Totales</th>
+                                <th scope="col">Podio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ranking_rows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card col-5">
+                <div style="margin-bottom: 16px;">
+                    <h2 style="font-size: 1.35rem; margin-bottom: 4px;">📈 Cumplimiento por Semana</h2>
+                    <p class="text-muted" style="font-size: 0.85rem;">Evolución del reto a lo largo de las 9 semanas oficiales.</p>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" aria-label="Tendencias de Cumplimiento Semanal">
+                        <thead>
+                            <tr>
+                                <th scope="col">Semana</th>
+                                <th scope="col">Días Éxito</th>
+                                <th scope="col">Cumplieron</th>
+                                <th scope="col">Efectividad</th>
+                                <th scope="col">Bolsa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {trend_rows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        """
+    else:
+        stats_tab_content = """
+        <section class="bento-grid">
+            <div class="card col-12">
+                <div id="stats-empty-state" class="empty-state" role="status" aria-live="polite">
+                    <div class="empty-icon" aria-hidden="true">📈</div>
+                    <h3>No hay actividades registradas en el reto</h3>
+                    <p>Aún no se han ingresado calorías ni pasos para los participantes. Registra actividades físicas diarias en el Panel General para activar la analítica integral y el podio de competición.</p>
+                </div>
+            </div>
+        </section>
+        """
+
     html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -360,6 +581,99 @@ def render_dashboard_html(service: ChallengeService) -> str:
         .btn-secondary:hover {{
             background: var(--secondary-hover);
         }}
+
+        /* Tabs Navigation (FEAT-007) */
+        .tabs-header {{
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 4px;
+        }}
+
+        .tab-btn {{
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-family);
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+
+        .tab-btn:hover {{
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }}
+
+        .tab-btn:focus-visible {{
+            outline: 2px solid var(--neon-accent);
+            outline-offset: 2px;
+        }}
+
+        .tab-btn.active {{
+            color: var(--primary);
+        }}
+
+        .tab-btn.active::after {{
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--neon-accent));
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }}
+
+        .tab-panel {{
+            display: block;
+        }}
+
+        .tab-panel.hidden {{
+            display: none !important;
+        }}
+
+        /* Podium Badges */
+        .badge-gold {{
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }}
+        .badge-silver {{
+            background: rgba(148, 163, 184, 0.2);
+            color: #CBD5E1;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }}
+        .badge-bronze {{
+            background: rgba(217, 119, 6, 0.2);
+            color: #F97316;
+            border: 1px solid rgba(217, 119, 6, 0.4);
+        }}
+
+        /* Trend Bars */
+        .trend-bar-container {{
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 6px;
+            overflow: hidden;
+            height: 10px;
+            width: 100%;
+            margin-top: 6px;
+        }}
+        .trend-bar-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--neon-accent));
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }}
     </style>
 </head>
 <body>
@@ -374,6 +688,17 @@ def render_dashboard_html(service: ChallengeService) -> str:
             </div>
         </header>
 
+        <!-- Barra de Navegación por Pestañas Accesible (AC-7.5) -->
+        <nav class="tabs-header" role="tablist" aria-label="Navegación del Reto Fit">
+            <button id="tab-general" class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-general" tabindex="0" onclick="switchTab('general')">
+                <span>📋</span> Panel General
+            </button>
+            <button id="tab-stats" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-stats" tabindex="-1" onclick="switchTab('stats')">
+                <span>📊</span> Estadísticas del Reto
+            </button>
+        </nav>
+
+        <div id="panel-general" class="tab-panel" role="tabpanel" aria-labelledby="tab-general" tabindex="0">
         <section class="bento-grid">
             <!-- Metrica 1: Bolsa Semanal -->
             <div class="card col-4">
@@ -449,7 +774,7 @@ def render_dashboard_html(service: ChallengeService) -> str:
             <!-- Formulario 3: Registrar Actividad Diaria -->
             <div class="card col-8">
                 <h3 style="font-size: 1.1rem; margin-bottom: 8px;">🏃 Registrar Actividad Diaria</h3>
-                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Meta diaria: $\ge 300$ kcal o $\ge 10,000$ pasos (mínimo 4 días exitosos/semana).</p>
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Meta diaria: ≥ 300 kcal o ≥ 10,000 pasos (mínimo 4 días exitosos/semana).</p>
                 <form class="action-form" onsubmit="event.preventDefault(); submitActivityForm();">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; align-items: flex-end;">
                         <div class="form-group">
@@ -495,12 +820,49 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 </form>
             </div>
 
+            <!-- Seccion de Informe Semanal de Cuotas y Cumplimiento -->
+            <div class="card col-12" id="weekly-report-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <h2 style="font-size: 1.35rem; margin-bottom: 4px;">📊 Informe Semanal de Cuotas y Cumplimiento</h2>
+                        <p class="text-muted" style="font-size: 0.85rem;">Auditoría de cuotas exigibles del calendario ($200 quincenales, $100 final) y cumplimiento físico semanal.</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        {status_closed_badge}
+                        <label for="weekly-report-select" class="form-label" style="margin: 0; font-weight: 600;">Semana:</label>
+                        <select id="weekly-report-select" class="form-input" style="width: auto; padding: 6px 14px; font-weight: 600; cursor: pointer;" onchange="loadWeeklyReport(this.value)">
+                            <option value="1" selected>Semana 1 (19-25 oct)</option>
+                            <option value="2">Semana 2 (26 oct - 1 nov)</option>
+                            <option value="3">Semana 3 (2-8 nov)</option>
+                            <option value="4">Semana 4 (9-15 nov)</option>
+                            <option value="5">Semana 5 (16-22 nov)</option>
+                            <option value="6">Semana 6 (23-29 nov)</option>
+                            <option value="7">Semana 7 (30 nov - 6 dic)</option>
+                            <option value="8">Semana 8 (7-13 dic)</option>
+                            <option value="9">Semana 9 Final (14-20 dic)</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="weekly-report-loading" style="display: none; padding: 24px; text-align: center; color: var(--neon-accent);" role="status" aria-live="polite">
+                    ⏳ Cargando métricas e informe de la semana...
+                </div>
+                <div id="weekly-report-container">
+                    {weekly_report_content}
+                </div>
+            </div>
+
             <!-- Tabla General de Concentrado -->
             <div class="card col-12">
                 <h2 style="font-size: 1.35rem; margin-bottom: 8px;">Concentrado Físico y Financiero</h2>
                 {table_content}
             </div>
         </section>
+        </div>
+
+        <!-- Panel de Estadísticas del Reto (AC-7.5, AC-7.6) -->
+        <div id="panel-stats" class="tab-panel hidden" role="tabpanel" aria-labelledby="tab-stats" tabindex="0" style="display: none;">
+            {stats_tab_content}
+        </div>
     </div>
 
     <!-- Modal Accesible de Confirmacion -->
@@ -710,6 +1072,150 @@ def render_dashboard_html(service: ChallengeService) -> str:
                 alert(err.detail || 'Error al liquidar la semana');
             }}
         }}
+
+        async function loadWeeklyReport(week) {{
+            const loading = document.getElementById('weekly-report-loading');
+            const container = document.getElementById('weekly-report-container');
+            if (loading) loading.style.display = 'block';
+            if (container) container.style.opacity = '0.5';
+
+            try {{
+                const res = await fetch('/api/reports/weekly/' + encodeURIComponent(week));
+                if (!res.ok) {{
+                    const errData = await res.json();
+                    throw new Error(errData.detail || 'Error al obtener informe semanal');
+                }}
+                const data = await res.json();
+                renderWeeklyReportData(data);
+            }} catch (err) {{
+                showToast(err.message, true);
+            }} finally {{
+                if (loading) loading.style.display = 'none';
+                if (container) container.style.opacity = '1';
+            }}
+        }}
+
+        function renderWeeklyReportData(data) {{
+            const closedBadge = document.getElementById('weekly-report-closed-badge');
+            if (closedBadge) {{
+                closedBadge.className = data.is_closed ? 'badge badge-success' : 'badge badge-warning';
+                closedBadge.textContent = data.is_closed ? 'Semana Liquidada' : 'Semana en Curso / Preliminar';
+            }}
+            const rateEl = document.getElementById('kpi-compliance-rate');
+            if (rateEl) rateEl.textContent = data.compliance_rate.toFixed(1) + '%';
+            const countEl = document.getElementById('kpi-compliance-counts');
+            if (countEl) countEl.textContent = data.met_count + ' cumplieron / ' + data.missed_count + ' no cumplieron';
+            const quotaEl = document.getElementById('kpi-expected-quota');
+            if (quotaEl) quotaEl.textContent = '$' + data.expected_contribution_per_participant.toFixed(2);
+            const statusEl = document.getElementById('kpi-quota-status');
+            if (statusEl) statusEl.textContent = data.participants_up_to_date + ' al corriente / ' + data.participants_behind + ' pendientes';
+            const poolEl = document.getElementById('kpi-pool-amount');
+            if (poolEl) poolEl.textContent = '$' + data.pool_amount.toFixed(2);
+            const gainEl = document.getElementById('kpi-gain-per-compliant');
+            if (gainEl) gainEl.textContent = '+$' + data.gain_per_compliant.toFixed(2) + ' por cumplidor';
+
+            const tbody = document.getElementById('weekly-report-table-body');
+            if (tbody && data.participants) {{
+                tbody.innerHTML = data.participants.map(p => {{
+                    const compBadge = p.is_met 
+                        ? `<span class="badge badge-success">${{p.successful_days}}/7 días (Cumplió)</span>`
+                        : `<span class="badge badge-warning">${{p.successful_days}}/7 días (Incumplió)</span>`;
+                    const statusBadge = p.financial_status === 'AL_CORRIENTE'
+                        ? `<span class="badge badge-success">Al corriente</span>`
+                        : `<span class="badge badge-warning">Pendiente: -$${{p.pending_amount.toFixed(2)}}</span>`;
+                    const penStr = p.penalty > 0 ? `-$${{p.penalty.toFixed(2)}}` : '$0.00';
+                    const penCls = p.penalty > 0 ? 'text-error' : 'text-muted';
+                    const earnStr = p.earnings > 0 ? `+$${{p.earnings.toFixed(2)}}` : '$0.00';
+                    const earnCls = p.earnings > 0 ? 'text-success' : 'text-muted';
+                    const impCls = p.net_balance_impact >= 0 ? 'text-success' : 'text-error';
+                    const sign = p.net_balance_impact >= 0 ? '+' : '';
+
+                    return `<tr>
+                        <td><strong>${{p.name}}</strong> <span class="text-muted">(${{p.participant_id}})</span></td>
+                        <td>${{compBadge}}</td>
+                        <td><strong>$${{p.total_contributed.toFixed(2)}}</strong> <span class="text-muted">/ $${{p.expected_contribution.toFixed(2)}}</span></td>
+                        <td>${{statusBadge}}</td>
+                        <td class="${{penCls}}">${{penStr}}</td>
+                        <td class="${{earnCls}}">${{earnStr}}</td>
+                        <td class="${{impCls}}"><strong>${{sign}}$${{p.net_balance_impact.toFixed(2)}}</strong></td>
+                    </tr>`;
+                }}).join('');
+            }}
+        }}
+
+        function switchTab(tabId) {{
+            const tabGeneral = document.getElementById('tab-general');
+            const tabStats = document.getElementById('tab-stats');
+            const panelGeneral = document.getElementById('panel-general');
+            const panelStats = document.getElementById('panel-stats');
+
+            if (tabId === 'stats') {{
+                if (tabGeneral) {{
+                    tabGeneral.classList.remove('active');
+                    tabGeneral.setAttribute('aria-selected', 'false');
+                    tabGeneral.setAttribute('tabindex', '-1');
+                }}
+                if (tabStats) {{
+                    tabStats.classList.add('active');
+                    tabStats.setAttribute('aria-selected', 'true');
+                    tabStats.setAttribute('tabindex', '0');
+                }}
+                if (panelGeneral) {{
+                    panelGeneral.classList.add('hidden');
+                    panelGeneral.style.display = 'none';
+                }}
+                if (panelStats) {{
+                    panelStats.classList.remove('hidden');
+                    panelStats.style.display = 'block';
+                    panelStats.focus();
+                }}
+            }} else {{
+                if (tabStats) {{
+                    tabStats.classList.remove('active');
+                    tabStats.setAttribute('aria-selected', 'false');
+                    tabStats.setAttribute('tabindex', '-1');
+                }}
+                if (tabGeneral) {{
+                    tabGeneral.classList.add('active');
+                    tabGeneral.setAttribute('aria-selected', 'true');
+                    tabGeneral.setAttribute('tabindex', '0');
+                }}
+                if (panelStats) {{
+                    panelStats.classList.add('hidden');
+                    panelStats.style.display = 'none';
+                }}
+                if (panelGeneral) {{
+                    panelGeneral.classList.remove('hidden');
+                    panelGeneral.style.display = 'block';
+                    panelGeneral.focus();
+                }}
+            }}
+        }}
+
+        document.addEventListener('DOMContentLoaded', () => {{
+            const tabs = [document.getElementById('tab-general'), document.getElementById('tab-stats')];
+            tabs.forEach((tab, index) => {{
+                if (!tab) return;
+                tab.addEventListener('keydown', (e) => {{
+                    let nextIndex = null;
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {{
+                        nextIndex = (index + 1) % tabs.length;
+                    }} else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {{
+                        nextIndex = (index - 1 + tabs.length) % tabs.length;
+                    }} else if (e.key === 'Home') {{
+                        nextIndex = 0;
+                    }} else if (e.key === 'End') {{
+                        nextIndex = tabs.length - 1;
+                    }}
+                    if (nextIndex !== null) {{
+                        e.preventDefault();
+                        tabs[nextIndex].focus();
+                        const tabTarget = nextIndex === 0 ? 'general' : 'stats';
+                        switchTab(tabTarget);
+                    }}
+                }});
+            }});
+        }});
     </script>
 </body>
 </html>
